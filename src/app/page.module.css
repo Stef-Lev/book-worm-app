@@ -1,0 +1,43 @@
+.main {
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: var(--space);
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.title {
+  font-size: clamp(2rem, 8vw, 3.5rem);
+  margin: 0;
+}
+
+.tagline {
+  color: var(--muted);
+  font-size: clamp(1rem, 3vw, 1.25rem);
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.button {
+  padding: 0.65rem 1.25rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--primary);
+  background: var(--primary);
+  color: var(--primary-contrast);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.secondary {
+  background: transparent;
+  color: var(--primary);
+}
