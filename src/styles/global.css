@@ -4,6 +4,7 @@
 @import "./font-weight.css";
 @import "./colors.css";
 @import "./border-radius.css";
+@import "./breakpoints.css";
 
 :root {
   --container: 70rem;

@@ -2,30 +2,30 @@
   --color-white: #ffffff;
   --color-black: #000000;
 
-  /* Palettes follow Tailwind's 50-950 scale */
-  --color-stone-50: #fafaf9;
-  --color-stone-100: #f5f5f4;
-  --color-stone-200: #e7e5e4;
-  --color-stone-300: #d6d3d1;
-  --color-stone-400: #a8a29e;
-  --color-stone-500: #78716c;
-  --color-stone-600: #57534e;
-  --color-stone-700: #44403c;
-  --color-stone-800: #292524;
-  --color-stone-900: #1c1917;
-  --color-stone-950: #0c0a09;
+  /* Brand palettes sampled from the logo (500 / 200 are the logo colors) */
+  --color-green-50: #f0f9f3;
+  --color-green-100: #dcf1e3;
+  --color-green-200: #bbe2c8;
+  --color-green-300: #8fcca6;
+  --color-green-400: #66b284;
+  --color-green-500: #4e9a67;
+  --color-green-600: #3d7e52;
+  --color-green-700: #326443;
+  --color-green-800: #2b5037;
+  --color-green-900: #25422f;
+  --color-green-950: #112419;
 
-  --color-amber-50: #fffbeb;
-  --color-amber-100: #fef3c7;
-  --color-amber-200: #fde68a;
-  --color-amber-300: #fcd34d;
-  --color-amber-400: #fbbf24;
-  --color-amber-500: #f59e0b;
-  --color-amber-600: #d97706;
-  --color-amber-700: #b45309;
-  --color-amber-800: #92400e;
-  --color-amber-900: #78350f;
-  --color-amber-950: #451a03;
+  --color-cream-50: #fdfcf6;
+  --color-cream-100: #faf7ea;
+  --color-cream-200: #f6f1dc;
+  --color-cream-300: #ece4c4;
+  --color-cream-400: #ddd1a3;
+  --color-cream-500: #c8b87d;
+  --color-cream-600: #a8975f;
+  --color-cream-700: #857649;
+  --color-cream-800: #625839;
+  --color-cream-900: #453e2a;
+  --color-cream-950: #26221a;
 
   --color-red-50: #fef2f2;
   --color-red-100: #fee2e2;
@@ -39,39 +39,29 @@
   --color-red-900: #7f1d1d;
   --color-red-950: #450a0a;
 
-  --color-green-50: #f0fdf4;
-  --color-green-100: #dcfce7;
-  --color-green-200: #bbf7d0;
-  --color-green-300: #86efac;
-  --color-green-400: #4ade80;
-  --color-green-500: #22c55e;
-  --color-green-600: #16a34a;
-  --color-green-700: #15803d;
-  --color-green-800: #166534;
-  --color-green-900: #14532d;
-  --color-green-950: #052e16;
-
   /* Semantic tokens: use these in components, they switch with the theme */
-  --color-bg: var(--color-stone-50);
-  --color-surface: var(--color-white);
-  --color-text: var(--color-stone-900);
-  --color-muted: var(--color-stone-500);
-  --color-border: var(--color-stone-200);
-  --color-primary: var(--color-amber-800);
-  --color-primary-contrast: var(--color-white);
+  --color-bg: var(--color-cream-100);
+  --color-surface: var(--color-cream-50);
+  --color-text: var(--color-green-950);
+  --color-muted: var(--color-green-800);
+  --color-border: var(--color-cream-300);
+  --color-primary: var(--color-green-600);
+  --color-primary-contrast: var(--color-cream-50);
+  --color-accent: var(--color-green-500);
   --color-danger: var(--color-red-600);
   --color-success: var(--color-green-600);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-bg: var(--color-stone-950);
-    --color-surface: var(--color-stone-900);
-    --color-text: var(--color-stone-100);
-    --color-muted: var(--color-stone-400);
-    --color-border: var(--color-stone-800);
-    --color-primary: var(--color-amber-400);
-    --color-primary-contrast: var(--color-stone-950);
+    --color-bg: var(--color-green-950);
+    --color-surface: var(--color-green-900);
+    --color-text: var(--color-cream-100);
+    --color-muted: var(--color-cream-400);
+    --color-border: var(--color-green-800);
+    --color-primary: var(--color-green-400);
+    --color-primary-contrast: var(--color-green-950);
+    --color-accent: var(--color-cream-200);
     --color-danger: var(--color-red-400);
     --color-success: var(--color-green-400);
   }

@@ -40,6 +40,12 @@
   font-weight: var(--font-weight-semibold);
 }
 
+@media (--md) {
+  .main {
+    gap: var(--space-6);
+  }
+}
+
 .secondary {
   background: transparent;
   color: var(--color-primary);
