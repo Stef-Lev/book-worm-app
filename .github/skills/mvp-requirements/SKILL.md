@@ -44,6 +44,8 @@ Already done: project setup, auth foundation (`User` model, `/api/register`, Aut
 - Other statistics: total books read, total pages read, average rating, average pages per book, average days to finish a book, most-read categories and authors, current streak/last-finished, did-not-finish count.
 
 ## Suggested data model (Mongoose)
+See the `mongodb-schemas` skill for the full schemas (it splits this into a shared `Book` catalog and a per-user `UserBook`). Summary of fields:
+
 `Book` (per user): `userId`, `title`, `authors[]`, `isbn`, `pageCount`, `categories[]`, `coverUrl`, `description`, `source` (`google-books` | `open-library` | `manual`), `externalId`, `status`, `currentPage`, `startedAt`, `finishedAt`, `rating` (0.5 to 5), `review`, timestamps. Index on `userId` plus `status`.
 
 ## Suggested build order
