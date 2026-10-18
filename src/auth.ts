@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
+import { TEST_USER, isTestLogin } from "@/lib/test-user";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
@@ -14,6 +15,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const email = String(credentials?.email ?? "").toLowerCase().trim();
         const password = String(credentials?.password ?? "");
         if (!email || !password) return null;
+
+        if (isTestLogin(email, password)) {
+          return { id: TEST_USER.id, name: TEST_USER.name, email: TEST_USER.email };
+        }
 
         await connectDB();
         const user = await User.findOne({ email });

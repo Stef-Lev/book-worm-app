@@ -1,0 +1,60 @@
+{
+  "nav": {
+    "library": "My Library",
+    "analytics": "Analytics",
+    "searchLabel": "Search books",
+    "searchPlaceholder": "Search by title, author, or ISBN...",
+    "logout": "Log out"
+  },
+  "preferences": {
+    "language": "Language",
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "auth": {
+    "loginTitle": "Log in",
+    "registerTitle": "Create account",
+    "name": "Name",
+    "email": "Email",
+    "password": "Password",
+    "passwordHint": "At least 8 characters",
+    "loginSubmit": "Log in",
+    "registerSubmit": "Register",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "errors": {
+      "invalidCredentials": "Invalid email or password.",
+      "invalidInput": "Name, a valid email and a password of 8+ characters are required.",
+      "emailTaken": "Email already registered.",
+      "generic": "Something went wrong. Please try again."
+    }
+  },
+  "pages": {
+    "home": {
+      "title": "Home page",
+      "description": "Your currently reading books and shelves will show up here."
+    },
+    "library": {
+      "title": "Library page",
+      "description": "All your shelves and books will show up here."
+    },
+    "analytics": {
+      "title": "Analytics page",
+      "description": "Your reading statistics will show up here."
+    },
+    "search": {
+      "title": "Search page",
+      "description": "Search results will show up here."
+    },
+    "login": {
+      "title": "Log in",
+      "description": "Welcome back to Bookworm."
+    },
+    "register": {
+      "title": "Create account",
+      "description": "Join Bookworm and start tracking your reading."
+    }
+  }
+}

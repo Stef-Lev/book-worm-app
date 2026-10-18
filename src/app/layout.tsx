@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { NextIntlClientProvider } from "next-intl";
 import { Geist, Geist_Mono } from "next/font/google";
 import "@/styles/global.css";
 
@@ -17,10 +19,20 @@ export const metadata: Metadata = {
   description: "Track your reading.",
 };
 
+// Applies the saved theme/locale before paint so the static shell never flashes
+const preferencesScript = `(function(){try{var c=document.cookie,t=c.match(/(?:^|; )theme=(light|dark)/),l=c.match(/(?:^|; )locale=(en|el)/),d=document.documentElement;if(t)d.dataset.theme=t[1];if(l)d.lang=l[1];}catch(e){}})();`;
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body>{children}</body>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: preferencesScript }} />
+      </head>
+      <body>
+        <Suspense>
+          <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        </Suspense>
+      </body>
     </html>
   );
 }
