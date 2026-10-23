@@ -33,20 +33,20 @@
   },
   "pages": {
     "home": {
-      "title": "Home page",
-      "description": "Your currently reading books and shelves will show up here."
+      "title": "A little space for your next chapter.",
+      "description": "Make yourself at home. Organize your shelves, discover a new read, and keep your favorite stories close."
     },
     "library": {
       "title": "Library page",
       "description": "All your shelves and books will show up here."
     },
     "analytics": {
-      "title": "Analytics page",
+      "title": "Reading insights",
       "description": "Your reading statistics will show up here."
     },
     "search": {
-      "title": "Search page",
-      "description": "Search results will show up here."
+      "title": "Search books",
+      "description": "Search the free Open Library catalog and add books to your shelves."
     },
     "login": {
       "title": "Log in",
@@ -56,5 +56,72 @@
       "title": "Create account",
       "description": "Join Bookworm and start tracking your reading."
     }
+  },
+  "libraryWorkspace": {
+    "title": "My Library",
+    "description": "Organize your books into shelves and collections, and keep your ratings and reviews.",
+    "loadError": "Your library could not be loaded.",
+    "genericError": "Something went wrong. Please try again.",
+    "addBooks": "Find and add books",
+    "searchBooks": "Search by title, author, or ISBN",
+    "searchPlaceholder": "Search Open Library...",
+    "search": "Search",
+    "searching": "Searching...",
+    "noSearchResults": "No books matched that search.",
+    "scanBarcode": "Scan ISBN barcode",
+    "stopScan": "Stop scanning",
+    "scannerUnsupported": "Barcode scanning is not supported here. Enter the ISBN in the search field instead.",
+    "scannerError": "The camera could not be started. Check camera permission or enter the ISBN manually.",
+    "addToShelf": "Add to shelf",
+    "addToCollection": "Add to collection",
+    "noCollection": "No collection",
+    "addBook": "Add book",
+    "bookAdded": "Book added to your library.",
+    "manualAdd": "Can't find it? Add a book manually",
+    "titleField": "Title",
+    "author": "Author",
+    "noAuthor": "Author not listed",
+    "isbn": "ISBN",
+    "pages": "pages",
+    "categories": "Categories",
+    "categoryHint": "Separate categories with commas",
+    "coverUrl": "Cover image URL",
+    "customCollections": "Custom collections",
+    "collectionName": "Collection name",
+    "createCollection": "Create collection",
+    "collectionCreated": "Collection created.",
+    "collectionDeleted": "Collection deleted.",
+    "deleteCollection": "Delete {name}",
+    "confirmDeleteCollection": "Delete the collection “{name}”? Books will remain in your library.",
+    "yourLibrary": "Your books",
+    "allBooks": "All books",
+    "shelfToRead": "To Read",
+    "shelfCurrentlyReading": "Currently Reading",
+    "shelfRead": "Read",
+    "shelfDidNotFinish": "Did Not Finish",
+    "filterCollection": "Filter by collection",
+    "allCollections": "All collections",
+    "sortBy": "Sort by",
+    "sortTitle": "Title",
+    "sortAuthor": "Author",
+    "sortCategory": "Category",
+    "sortRating": "Rating",
+    "sortDateAdded": "Date added",
+    "sortDateFinished": "Date finished",
+    "sortPageCount": "Page count",
+    "rating": "Rating",
+    "noRating": "Not rated",
+    "review": "Review",
+    "startedAt": "Started reading",
+    "finishedAt": "Finished reading",
+    "collections": "Collections",
+    "save": "Save changes",
+    "saving": "Saving...",
+    "remove": "Remove from library",
+    "confirmRemove": "Remove “{title}” from your library?",
+    "bookRemoved": "Book removed from your library.",
+    "changesSaved": "Changes saved.",
+    "emptyLibrary": "Your library is empty. Search for a book above to get started.",
+    "noBooksMatch": "No books match these filters."
   }
 }

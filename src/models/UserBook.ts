@@ -7,9 +7,9 @@ const userBookSchema = new mongoose.Schema(
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     bookId: { type: mongoose.Schema.Types.ObjectId, ref: "Book", required: true },
     status: { type: String, enum: SHELVES, default: "to-read" },
-    currentPage: { type: Number, min: 0, default: 0 },
     startedAt: { type: Date, default: null },
     finishedAt: { type: Date, default: null },
+    collectionIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "Collection" }],
     rating: {
       type: Number,
       default: null,

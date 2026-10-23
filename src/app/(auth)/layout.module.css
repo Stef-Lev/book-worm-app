@@ -1,0 +1,5 @@
+.preferences {
+  display: flex;
+  justify-content: end;
+  padding: var(--space-4) var(--page-padding);
+}

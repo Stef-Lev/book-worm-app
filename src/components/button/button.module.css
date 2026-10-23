@@ -6,8 +6,9 @@
   gap: var(--space-2);
   padding-block: var(--space-2-5);
   padding-inline: var(--space-4);
+  min-block-size: var(--space-11);
   border: 1px solid transparent;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   font-family: inherit;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
@@ -19,7 +20,7 @@
 }
 
 .button:focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }
 
@@ -33,13 +34,13 @@
 }
 
 .secondary {
-  border-color: var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text);
+  border-color: var(--color-secondary);
+  background: var(--color-secondary);
+  color: var(--color-secondary-contrast);
 }
 
 .secondary:hover:not(:disabled) {
-  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-secondary), var(--color-white) 15%);
 }
 
 .button:disabled {

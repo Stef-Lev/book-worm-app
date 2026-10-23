@@ -1,13 +1,7 @@
-import { getTranslations } from "next-intl/server";
-import styles from "./search-page.module.css";
+import BookLibrary from "@/components/book-library/book-library";
 
-export default async function SearchPage() {
-  const t = await getTranslations("pages.search");
+type SearchPageProps = { initialQuery?: string };
 
-  return (
-    <main className={styles.main}>
-      <h1>{t("title")}</h1>
-      <p>{t("description")}</p>
-    </main>
-  );
+export default function SearchPage({ initialQuery = "" }: SearchPageProps) {
+  return <BookLibrary initialQuery={initialQuery} />;
 }

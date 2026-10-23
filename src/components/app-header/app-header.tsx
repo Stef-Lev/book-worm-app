@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BookOpen, Search } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import LogoutButton from "@/components/logout-button/logout-button";
 import PreferencesSwitcher from "@/components/preferences-switcher/preferences-switcher";
@@ -11,9 +12,11 @@ export default async function AppHeader({ userName, theme }: AppHeaderProps) {
   return (
     <header className={styles.header}>
       <Link href="/" className={styles.logo}>
+        <span className={styles.logoMark}><BookOpen aria-hidden="true" /></span>
         Bookworm
       </Link>
       <form action="/search" role="search" className={styles.search}>
+        <Search className={styles.searchIcon} aria-hidden="true" />
         <input
           type="search"
           name="q"

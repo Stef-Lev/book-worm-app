@@ -1,7 +1,7 @@
 .switcher {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-3);
+  gap: var(--space-2);
 }
 
 .field {
@@ -16,10 +16,11 @@
 }
 
 .select {
-  padding-block: var(--space-1);
+  min-block-size: var(--space-10);
+  padding-block: var(--space-2);
   padding-inline: var(--space-2);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg);
   color: var(--color-text);
 }
