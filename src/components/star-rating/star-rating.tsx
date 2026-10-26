@@ -12,6 +12,7 @@ export default function StarRating({
   value,
   onValueChange,
   disabled,
+  readOnly = false,
 }: StarRatingProps) {
   const t = useTranslations("ratingControl");
 
@@ -21,8 +22,9 @@ export default function StarRating({
       count={5}
       allowHalf
       value={value ?? 0}
+      readOnly={readOnly}
       onValueChange={({ value: nextValue }) =>
-        onValueChange(nextValue ? Math.max(1, nextValue) : null)
+        onValueChange?.(nextValue ? Math.max(1, nextValue) : null)
       }
       disabled={disabled}
       translations={{
@@ -33,7 +35,9 @@ export default function StarRating({
           }),
       }}
     >
-      <RatingGroup.Label className={styles.label}>{label}</RatingGroup.Label>
+      <RatingGroup.Label className={readOnly ? styles.readOnlyLabel : styles.label}>
+        {label}
+      </RatingGroup.Label>
       <div className={styles.controls}>
         <RatingGroup.Control className={styles.stars}>
           {[1, 2, 3, 4, 5].map((rating) => (
@@ -49,13 +53,15 @@ export default function StarRating({
             </RatingGroup.Item>
           ))}
         </RatingGroup.Control>
-        <IconButton
-          label={t("clear")}
-          onClick={() => onValueChange(null)}
-          disabled={disabled || value === null}
-        >
-          <X aria-hidden="true" />
-        </IconButton>
+        {!readOnly && (
+          <IconButton
+            label={t("clear")}
+            onClick={() => onValueChange?.(null)}
+            disabled={disabled || value === null}
+          >
+            <X aria-hidden="true" />
+          </IconButton>
+        )}
       </div>
     </RatingGroup.Root>
   );

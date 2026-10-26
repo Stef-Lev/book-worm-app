@@ -1,20 +1,32 @@
 .loading {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
   display: grid;
-  gap: var(--space-6);
-  max-inline-size: var(--container);
-  margin-inline: auto;
+  place-content: center;
+  justify-items: center;
   padding: var(--page-padding);
+  background: var(--color-bg);
+  cursor: progress;
 }
 
-.brand {
-  color: var(--color-primary);
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-bold);
+.spinner {
+  inline-size: var(--space-12);
+  block-size: var(--space-12);
+  border: var(--space-1) solid var(--color-border);
+  border-block-start-color: var(--color-primary);
+  border-radius: var(--radius-full);
+  animation: spin 800ms linear infinite;
 }
 
-.placeholder {
-  min-block-size: var(--space-40);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-2xl);
-  background: var(--color-primary-soft);
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
 }

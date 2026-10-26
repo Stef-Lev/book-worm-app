@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { NextIntlClientProvider } from "next-intl";
 import { Geist, Geist_Mono } from "next/font/google";
+import RouteLoading from "@/components/route-loading/route-loading";
 import "@/styles/global.css";
 
 const geistSans = Geist({
@@ -29,7 +30,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: preferencesScript }} />
       </head>
       <body>
-        <Suspense>
+        <Suspense fallback={<RouteLoading />}>
           <NextIntlClientProvider>{children}</NextIntlClientProvider>
         </Suspense>
       </body>

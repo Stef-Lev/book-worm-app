@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/navigation-link/navigation-link";
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import LogoutButton from "@/components/logout-button/logout-button";

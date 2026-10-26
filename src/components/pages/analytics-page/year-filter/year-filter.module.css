@@ -1,0 +1,4 @@
+.filter {
+  display: grid;
+  min-inline-size: var(--space-40);
+}

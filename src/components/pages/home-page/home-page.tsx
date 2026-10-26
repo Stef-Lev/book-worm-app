@@ -1,5 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import Link from "next/link";
+import Link from "@/components/navigation-link/navigation-link";
 import { ArrowRight, BookOpen, Library, Search } from "lucide-react";
 import styles from "./home-page.module.css";
 

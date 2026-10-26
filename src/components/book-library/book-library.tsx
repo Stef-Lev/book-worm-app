@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
+import Link from "@/components/navigation-link/navigation-link";
+import RouteLoading from "@/components/route-loading/route-loading";
 import {
   BookOpen,
   Check,
@@ -429,6 +430,7 @@ export default function BookLibrary({
 
   return (
     <main className={styles.main}>
+      {!libraryLoaded && !error && <RouteLoading />}
       <section className={styles.hero}>
         <span className={styles.heroIcon}>
           <BookOpen aria-hidden="true" />
@@ -601,10 +603,29 @@ export default function BookLibrary({
             className={`${styles.panel} ${styles.libraryPanel}`}
             aria-labelledby="library-heading"
           >
-            <h2 className={styles.sectionTitle} id="library-heading">
-              <Library aria-hidden="true" />
-              {t("yourLibrary")}
-            </h2>
+            <div className={styles.libraryHeader}>
+              <h2 className={styles.sectionTitle} id="library-heading">
+                <Library aria-hidden="true" />
+                {t("yourLibrary")}
+              </h2>
+              <CollectionsDialog
+                collections={collections}
+                onChange={setCollections}
+                disabled={!libraryLoaded}
+                onDeleted={(id) => {
+                  setEntries((previous) =>
+                    previous.map((entry) => ({
+                      ...entry,
+                      collectionIds: entry.collectionIds.filter(
+                        (collectionId) => collectionId !== id,
+                      ),
+                    })),
+                  );
+                  if (collectionFilter === id) setCollectionFilter("");
+                  if (searchCollection === id) setSearchCollection("");
+                }}
+              />
+            </div>
             <TextInput
               label={t("searchLibrary")}
               fieldClassName={styles.field}
@@ -613,28 +634,25 @@ export default function BookLibrary({
               placeholder={t("librarySearchPlaceholder")}
               onChange={(event) => setLibraryQuery(event.target.value)}
             />
-            <div className={styles.shelves}>
-              <button
-                type="button"
-                className={`${styles.shelfButton} ${shelfFilter === "all" ? styles.activeShelf : ""}`}
-                aria-pressed={shelfFilter === "all"}
-                onClick={() => setShelfFilter("all")}
-              >
-                {t("allBooks")} ({entries.length})
-              </button>
-              {shelves.map((shelf) => (
-                <button
-                  type="button"
-                  className={`${styles.shelfButton} ${shelfFilter === shelf ? styles.activeShelf : ""}`}
-                  aria-pressed={shelfFilter === shelf}
-                  onClick={() => setShelfFilter(shelf)}
-                  key={shelf}
-                >
-                  {shelfNames[shelf]} (
-                  {entries.filter((entry) => entry.status === shelf).length})
-                </button>
-              ))}
-            </div>
+            <Dropdown
+              label={t("status")}
+              fieldClassName={styles.field}
+              value={shelfFilter}
+              onValueChange={(value) => {
+                if (value === "all") setShelfFilter("all");
+                else {
+                  const shelf = shelves.find((shelf) => shelf === value);
+                  if (shelf) setShelfFilter(shelf);
+                }
+              }}
+              options={[
+                { value: "all", label: `${t("allBooks")} (${entries.length})` },
+                ...shelves.map((shelf) => ({
+                  value: shelf,
+                  label: `${shelfNames[shelf]} (${entries.filter((entry) => entry.status === shelf).length})`,
+                })),
+              ]}
+            />
             <div className={styles.toolbar}>
               <Dropdown
                 label={t("filterAuthor")}
@@ -662,38 +680,19 @@ export default function BookLibrary({
                   })),
                 ]}
               />
-              <div className={styles.collectionFilter}>
-                <Dropdown
-                  label={t("filterCollection")}
-                  fieldClassName={styles.field}
-                  value={collectionFilter}
-                  onValueChange={setCollectionFilter}
-                  options={[
-                    { value: "", label: t("allCollections") },
-                    ...collections.map((collection) => ({
-                      value: collection.id,
-                      label: collection.name,
-                    })),
-                  ]}
-                />
-                <CollectionsDialog
-                  collections={collections}
-                  onChange={setCollections}
-                  disabled={!libraryLoaded}
-                  onDeleted={(id) => {
-                    setEntries((previous) =>
-                      previous.map((entry) => ({
-                        ...entry,
-                        collectionIds: entry.collectionIds.filter(
-                          (collectionId) => collectionId !== id,
-                        ),
-                      })),
-                    );
-                    if (collectionFilter === id) setCollectionFilter("");
-                    if (searchCollection === id) setSearchCollection("");
-                  }}
-                />
-              </div>
+              <Dropdown
+                label={t("filterCollection")}
+                fieldClassName={styles.field}
+                value={collectionFilter}
+                onValueChange={setCollectionFilter}
+                options={[
+                  { value: "", label: t("allCollections") },
+                  ...collections.map((collection) => ({
+                    value: collection.id,
+                    label: collection.name,
+                  })),
+                ]}
+              />
               <Dropdown
                 label={t("sortBy")}
                 fieldClassName={styles.field}

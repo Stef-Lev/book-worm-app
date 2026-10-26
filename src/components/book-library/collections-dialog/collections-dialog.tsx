@@ -105,9 +105,10 @@ export default function CollectionsDialog({
       }}
     >
       <Dialog.Trigger asChild>
-        <IconButton label={t("manageCollections")} disabled={disabled}>
+        <Button variant="outline" disabled={disabled}>
           <FolderCog aria-hidden="true" />
-        </IconButton>
+          {t("manageCollections")}
+        </Button>
       </Dialog.Trigger>
       <Portal>
         <Dialog.Backdrop className={styles.backdrop} />

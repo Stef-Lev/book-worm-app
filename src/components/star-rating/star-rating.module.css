@@ -9,6 +9,15 @@
   font-weight: var(--font-weight-medium);
 }
 
+.readOnlyLabel {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .controls {
   display: flex;
   flex-wrap: wrap;
@@ -40,6 +49,17 @@
 .item[data-disabled] {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.rating[data-readonly] .item {
+  inline-size: var(--space-6);
+  block-size: var(--space-7);
+  cursor: default;
+}
+
+.rating[data-readonly] .star {
+  inline-size: var(--space-5);
+  block-size: var(--space-5);
 }
 
 .star {

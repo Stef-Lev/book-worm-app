@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/navigation-link/navigation-link";
 import { BookOpen } from "lucide-react";
 import styles from "./auth-page-shell.module.css";
 import type { AuthPageShellProps } from "./auth-page-shell.types";

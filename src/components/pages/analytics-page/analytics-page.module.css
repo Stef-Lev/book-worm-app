@@ -1,39 +1,216 @@
 .main {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-6);
+  inline-size: 100%;
   max-inline-size: var(--container);
-  margin: var(--page-padding);
+  min-inline-size: 0;
+  margin-inline: auto;
   padding: var(--page-padding);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-3xl);
 }
 
-.icon {
-  display: grid;
-  place-items: center;
-  inline-size: var(--space-16);
-  block-size: var(--space-16);
-  border-radius: var(--radius-2xl);
-  background: var(--color-secondary);
-  color: var(--color-secondary-contrast);
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--space-4);
 }
 
-.icon svg {
-  inline-size: var(--space-8);
-  block-size: var(--space-8);
-}
-
-.main h1 {
+.title {
+  margin: 0;
   font-size: var(--font-size-3xl);
+  line-height: var(--line-height-tight);
 }
 
-.main p {
+.description,
+.panelHeading p,
+.metricContext,
+.footerNote {
+  margin-block: var(--space-2) 0;
   color: var(--color-muted);
+  font-size: var(--font-size-sm);
 }
 
-@media (--xl) {
-  .main {
-    margin-inline: auto;
+.summary {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+}
+
+.metric,
+.panel {
+  min-inline-size: 0;
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.metricLabel {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.metricValue {
+  margin-block-start: var(--space-2);
+  margin-inline: 0;
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+}
+
+.metricContext {
+  margin-block-start: var(--space-1);
+}
+
+.metricLink {
+  display: inline-block;
+  margin-block-start: var(--space-2);
+  color: var(--color-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.sections {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.panel {
+  display: grid;
+  align-content: start;
+  gap: var(--space-4);
+}
+
+.panelHeading h2 {
+  margin: 0;
+  font-size: var(--font-size-xl);
+}
+
+.panelHeading p {
+  margin-block-start: var(--space-1);
+}
+
+.monthList,
+.shelfList,
+.favoriteList {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.monthRow {
+  display: grid;
+  grid-template-columns: minmax(var(--space-16), 1fr) minmax(0, 3fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.monthLabel,
+.monthCount,
+.shelfRow {
+  font-size: var(--font-size-sm);
+}
+
+.monthProgress,
+.libraryProgress {
+  display: block;
+  inline-size: 100%;
+  block-size: var(--space-3);
+  accent-color: var(--color-primary);
+}
+
+.monthCount,
+.shelfCount {
+  min-inline-size: var(--space-6);
+  text-align: end;
+  font-weight: var(--font-weight-semibold);
+}
+
+.dataNote,
+.emptyMessage {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: var(--font-size-sm);
+}
+
+.readProgress {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.progressLabel,
+.shelfRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.progressLabel strong {
+  font-size: var(--font-size-lg);
+}
+
+.shelfList {
+  gap: var(--space-2);
+}
+
+.emptyState {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+}
+
+.favorite {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.cover {
+  inline-size: var(--space-14);
+  border-radius: var(--radius-sm);
+}
+
+.favoriteDetails {
+  min-inline-size: 0;
+}
+
+.favoriteDetails h3,
+.favoriteDetails p {
+  margin: 0;
+}
+
+.favoriteDetails h3 {
+  overflow-wrap: anywhere;
+  font-size: var(--font-size-base);
+}
+
+.favoriteDetails p {
+  margin-block-start: var(--space-1);
+  color: var(--color-muted);
+  font-size: var(--font-size-sm);
+}
+
+.footerNote {
+  margin: 0;
+}
+
+@media (--md) {
+  .summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .sections {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sections > :first-child {
+    grid-column: 1 / -1;
   }
 }

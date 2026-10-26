@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/navigation-link/navigation-link";
 import { getTranslations } from "next-intl/server";
 import AuthPageShell from "@/components/auth-page-shell/auth-page-shell";
 import LoginForm from "@/components/pages/login-page/login-form/login-form";

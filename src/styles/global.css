@@ -7,6 +7,7 @@
 @import "./breakpoints.css";
 
 :root {
+  scrollbar-gutter: stable;
   --container: 70rem;
   --page-padding: clamp(var(--space-4), 4vw, var(--space-8));
 }
