@@ -93,7 +93,6 @@
   margin-block-start: var(--space-1);
 }
 
-.monthList,
 .shelfList,
 .favoriteList {
   display: grid;
@@ -103,20 +102,10 @@
   list-style: none;
 }
 
-.monthRow {
-  display: grid;
-  grid-template-columns: minmax(var(--space-16), 1fr) minmax(0, 3fr) auto;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.monthLabel,
-.monthCount,
 .shelfRow {
   font-size: var(--font-size-sm);
 }
 
-.monthProgress,
 .libraryProgress {
   display: block;
   inline-size: 100%;
@@ -124,7 +113,6 @@
   accent-color: var(--color-primary);
 }
 
-.monthCount,
 .shelfCount {
   min-inline-size: var(--space-6);
   text-align: end;

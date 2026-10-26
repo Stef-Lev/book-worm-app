@@ -1,56 +1,196 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Bookworm
 
-## Getting Started
+A personal book-tracking app for organizing your library, recording reading dates
+and reviews, and seeing simple reading insights. The interface supports English
+and Greek, light and dark themes, and responsive layouts.
 
-First, run the development server:
+## Features
+
+### Accounts
+
+- Register with a name, email address, and password of at least eight characters.
+- Sign in with email and password, and sign out.
+- Library entries and custom collections are scoped to the signed-in user.
+
+### Discover and add books
+
+- Search Open Library by title, author, or ISBN.
+- Add search results to a shelf and optionally a collection.
+- Add books manually with a title, author, ISBN, page count, categories, and an
+  optional cover-image URL.
+- Scan ISBN barcodes on browsers that support `BarcodeDetector` and camera
+  access. Manual ISBN search remains available when scanning is unsupported.
+
+Book metadata is saved in a shared catalog. Cover URLs are stored, not image
+files: the browser loads Open Library covers or manually supplied URLs directly.
+Missing or failed covers show a book-icon placeholder.
+
+### My Library
+
+- Organize books into **To Read**, **Currently Reading**, **Read**, or
+  **Did Not Finish**.
+- Filter by status, author, category, or collection, and search saved books by
+  title, author, or ISBN.
+- Sort by title, author, category, rating, date added, date finished, or page count.
+- Create, rename, and delete custom collections through **Manage collections**.
+  Deleting a collection keeps its books in the library.
+- Record editable start and finish dates with a themed calendar picker. Both
+  languages use `dd/mm/yyyy`; placeholders are `DD/MM/YYYY` in English and
+  `ΗΗ/ΜΜ/ΕΕΕΕ` in Greek. Saved dates use ISO format.
+- Rate books from one to five stars in half-star increments and add written reviews.
+- Permanently remove a library entry after confirmation, including its personal
+  dates, rating, review, and collection assignments.
+
+### Reading insights
+
+- Select a year or **All time**; changing the dropdown updates the statistics.
+- See books finished and known pages in finished books for the selected period.
+- View books finished per month for a selected year, or per year for **All time**.
+- See current shelf counts, the overall percentage of the library marked Read,
+  and the number of books currently being read.
+- View up to five highest-rated books with covers and read-only star ratings.
+
+Dated completion metrics require Read status and a valid finish date. Future
+finish dates and dates earlier than the start date are excluded. Calendar grouping
+uses UTC. Missing or zero page counts are treated as unknown, and the page reports
+incomplete date and page-count data rather than inventing values.
+
+Shelf counts and favorites describe the current saved library, not its historical
+state. Removing an entry also removes its contribution to analytics. Page totals
+describe pages in completed books, not measured pages read during a month.
+
+### Interface
+
+- English and Greek translations.
+- Theme and language preferences saved in cookies; system theme is used when no
+  explicit theme is selected.
+- Shared dropdowns, date inputs, buttons, and star ratings.
+- A full-screen spinner for pending navigation and initial library loading, with
+  reduced-motion support and reserved scrollbar space to reduce layout shifts.
+
+## Tech stack
+
+- Next.js App Router and React with TypeScript
+- MongoDB with Mongoose
+- Auth.js credentials authentication, JWT sessions, and bcrypt password hashing
+- next-intl for localization
+- Ark UI for calendars, dialogs, and ratings; Radix UI for dropdowns
+- CSS Modules, shared design tokens, and PostCSS custom-media breakpoints
+- Open Library for catalog search and cover images
+
+## Local setup
+
+### Prerequisites
+
+- Node.js compatible with the installed Next.js release and npm
+- A running MongoDB instance, locally or hosted
+- Internet access for Open Library search and externally hosted covers
+
+Install dependencies:
+
+```bash
+npm ci
+```
+
+Create `.env.local` using [`.env.example`](./.env.example) as a template:
+
+```dotenv
+MONGODB_URI=mongodb://127.0.0.1:27017/bookworm
+AUTH_SECRET=<a-long-random-secret>
+```
+
+Generate an authentication secret, for example:
+
+```bash
+openssl rand -base64 32
+```
+
+Keep real secrets and database credentials out of version control.
+
+Start the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000), then register an account.
 
-## UI theme
+A development-only test login is defined in
+[`src/lib/test-user.ts`](./src/lib/test-user.ts). It bypasses the database only
+for sign-in; library, collection, and analytics features still require MongoDB.
+The test login is disabled in production.
 
-Both authenticated and account layouts wait for an incoming request using
-`connection()` before calling Auth.js. Session handling uses cryptographic
-randomness and must not run during static prerendering with Cache Components.
-Each layout renders its request-time authentication inside a local Suspense
-boundary with a static loading placeholder. Route-group loading boundaries also
-cover page-level data access during navigation below a shared layout. Keep both
-boundaries: Suspense in the root layout alone does not cover these transitions.
+## Testing on a phone
 
-The interface uses teal (`#377D80`) for primary actions and coral (`#FF9182`)
-for secondary actions and highlights. Shared light and dark color tokens live in
-[`src/styles/colors.css`](src/styles/colors.css); components use semantic tokens
-so explicit and system-selected themes stay consistent. Coral backgrounds use
-dark text, and keyboard focus uses a contrasting teal outline.
+Connect the phone to the same network as the development computer. If needed,
+explicitly bind the server to all network interfaces:
 
-Component styles are CSS Modules, with spacing and radius tokens from
-[`src/styles/`](src/styles/) and mobile-first custom-media breakpoints. Keep the
-same button, field, and card treatments across account and library screens.
+```bash
+npm run dev -- --hostname 0.0.0.0
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Open `http://192.168.1.77:3000` on the phone. The current LAN hostname is allowed
+in [`next.config.ts`](./next.config.ts) so development assets and hot-reload
+connections can be accessed. If the computer's IP changes, update
+`allowedDevOrigins` with the new hostname, without a scheme or port, restart the
+server, and reload the phone's page.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Cookies saved on `localhost` are separate from those saved on the LAN IP, so sign
+in and choose preferences again when switching hosts.
 
-## Learn More
+Camera scanning requires a secure context, normally HTTPS or localhost. An HTTP
+LAN URL may not support camera access even when the rest of the app works.
 
-To learn more about Next.js, take a look at the following resources:
+Development mode compiles routes on demand. For more representative performance
+testing, build and run production mode on another port:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run build
+npm run start -- --hostname 0.0.0.0 --port 3001
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Then open `http://192.168.1.77:3001`. Use a registered account, since the
+development-only test login is unavailable in production mode.
 
-## Deploy on Vercel
+## Commands
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start the development server |
+| `npm run build` | Create a production build |
+| `npm run start` | Serve an existing production build |
+| `npm run lint` | Run ESLint |
+| `npx tsc --noEmit` | Check TypeScript types |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+There is currently no dedicated automated test script.
+
+## Project structure
+
+| Path | Contents |
+| --- | --- |
+| [`src/app/`](./src/app/) | App Router pages, layouts, loading states, and API routes |
+| [`src/components/`](./src/components/) | Shared UI and page-content components |
+| [`src/models/`](./src/models/) | User, shared Book catalog, UserBook, and Collection schemas |
+| [`src/lib/`](./src/lib/) | Database connection, catalog search, preferences, and helpers |
+| [`src/messages/`](./src/messages/) | English and Greek translations |
+| [`src/styles/`](./src/styles/) | Global styles, theme tokens, and breakpoints |
+
+Components use kebab-case folders, CSS Modules, typed props, semantic theme tokens,
+and logical CSS properties. Reuse existing UI components rather than adding native
+controls with separate styling.
+
+Cache Components and Partial Prefetching are enabled. Authentication layouts wait
+for an incoming request with `connection()` before calling Auth.js, and wrap
+request-time work in Suspense. Route-group loading boundaries cover page
+navigation; preserve these boundaries when adding server-side data access.
+
+## Current limitations
+
+- No current-page tracking, reading-session logs, measured reading speed, or
+  daily reading streaks.
+- No reading calendar, reading goals, or reread history.
+- No profile editing, password reset, social features, or import/export.
+- Catalog metadata and cover availability depend on external providers.
+- The collection picker currently selects one collection per book, although the
+  data model supports multiple memberships.
+- Analytics reflect currently saved entries, not an immutable reading history.

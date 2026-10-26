@@ -7,7 +7,7 @@ import { AlertTriangle, Save, Trash2 } from "lucide-react";
 import Dropdown from "@/components/dropdown/dropdown";
 import Button from "@/components/button/button";
 import BookCover from "@/components/book-cover/book-cover";
-import TextInput from "@/components/text-input/text-input";
+import DateInput from "@/components/date-input/date-input";
 import Textarea from "@/components/textarea/textarea";
 import StarRating from "@/components/star-rating/star-rating";
 import type { BookEntryProps, Shelf } from "./book-entry.types";
@@ -88,21 +88,17 @@ export default function BookEntry({
           ]}
         />
         <div className={styles.dates}>
-          <TextInput
+          <DateInput
             label={labels.startedAt}
             fieldClassName={styles.field}
-            className={styles.input}
-            type="date"
             value={entry.startedAt}
-            onChange={(event) => update({ startedAt: event.target.value })}
+            onValueChange={(value) => update({ startedAt: value })}
           />
-          <TextInput
+          <DateInput
             label={labels.finishedAt}
             fieldClassName={styles.field}
-            className={styles.input}
-            type="date"
             value={entry.finishedAt}
-            onChange={(event) => update({ finishedAt: event.target.value })}
+            onValueChange={(value) => update({ finishedAt: value })}
           />
         </div>
         <div className={styles.rating}>

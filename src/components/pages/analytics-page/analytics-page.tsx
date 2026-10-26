@@ -6,6 +6,7 @@ import { auth } from "@/auth";
 import BookCover from "@/components/book-cover/book-cover";
 import StarRating from "@/components/star-rating/star-rating";
 import YearFilter from "@/components/pages/analytics-page/year-filter/year-filter";
+import ReadingOverTime from "@/components/pages/analytics-page/reading-over-time/reading-over-time";
 import { connectDB } from "@/lib/mongodb";
 import UserBook, { SHELVES } from "@/models/UserBook";
 import styles from "./analytics-page.module.css";
@@ -121,9 +122,9 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
     const count =
       completionCounts.get(`${date.getUTCFullYear()}-${date.getUTCMonth()}`) ?? 0;
     months.push({
+      year: date.getUTCFullYear(),
       label: new Intl.DateTimeFormat(locale, {
         month: "short",
-        ...(year === "all" ? { year: "numeric" as const } : {}),
         timeZone: "UTC",
       }).format(date),
       count,
@@ -158,10 +159,6 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
       return ratingDifference || a.book.title.localeCompare(b.book.title, locale);
     })
     .slice(0, 5);
-  const maxMonthCount = months.reduce(
-    (max, { count }) => Math.max(max, count),
-    1,
-  );
   const yearOptions = Array.from(
     { length: currentYear - minYear + 1 },
     (_, index) => currentYear - index,
@@ -202,28 +199,10 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
 
       <div className={styles.sections}>
         <section className={styles.panel} aria-labelledby="reading-over-time">
-          <div className={styles.panelHeading}>
-            <h2 id="reading-over-time">{t("readingOverTime")}</h2>
-            <p>{t("monthlyCompletions", { period: periodLabel })}</p>
-          </div>
-          {selectedCompletions.length === 0 ? (
-            <p className={styles.emptyMessage}>{t("noCompletions")}</p>
-          ) : (
-            <ul className={styles.monthList}>
-              {months.map(({ label, count }) => (
-                <li className={styles.monthRow} key={label}>
-                  <span className={styles.monthLabel}>{label}</span>
-                  <progress
-                    className={styles.monthProgress}
-                    max={maxMonthCount}
-                    value={count}
-                    aria-label={t("monthCompletionCount", { month: label, count })}
-                  />
-                  <span className={styles.monthCount}>{count}</span>
-                </li>
-              ))}
-            </ul>
-          )}
+          <ReadingOverTime
+            months={months}
+            year={year}
+          />
           <p className={styles.dataNote}>
             {t("invalidCompletionDates", { count: missingOrInconsistentDates })}
           </p>

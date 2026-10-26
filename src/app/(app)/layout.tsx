@@ -20,7 +20,7 @@ async function AuthenticatedLayout({ children }: Pick<LayoutProps<"/">, "childre
 
   return (
     <>
-      <AppHeader userName={session.user.name ?? ""} theme={await getTheme()} />
+      <AppHeader theme={await getTheme()} />
       {children}
     </>
   );

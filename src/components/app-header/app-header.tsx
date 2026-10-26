@@ -6,7 +6,7 @@ import PreferencesSwitcher from "@/components/preferences-switcher/preferences-s
 import styles from "./app-header.module.css";
 import type { AppHeaderProps } from "./app-header.types";
 
-export default async function AppHeader({ userName, theme }: AppHeaderProps) {
+export default async function AppHeader({ theme }: AppHeaderProps) {
   const t = await getTranslations("nav");
 
   return (
@@ -29,9 +29,6 @@ export default async function AppHeader({ userName, theme }: AppHeaderProps) {
       <div className={styles.account}>
         <PreferencesSwitcher theme={theme} />
         <LogoutButton />
-        <span className={styles.user} title={userName}>
-          {userName.charAt(0).toUpperCase()}
-        </span>
       </div>
     </header>
   );

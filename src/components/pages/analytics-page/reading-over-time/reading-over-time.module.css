@@ -1,0 +1,53 @@
+.chart {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.header h2 {
+  margin: 0;
+  font-size: var(--font-size-xl);
+}
+
+.header p,
+.emptyMessage {
+  margin-block: var(--space-1) 0;
+  color: var(--color-muted);
+  font-size: var(--font-size-sm);
+}
+
+.monthList {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.monthRow {
+  display: grid;
+  grid-template-columns: minmax(var(--space-16), 1fr) minmax(0, 3fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
+.progress {
+  display: block;
+  inline-size: 100%;
+  block-size: var(--space-3);
+  accent-color: var(--color-primary);
+}
+
+.count {
+  min-inline-size: var(--space-6);
+  text-align: end;
+  font-weight: var(--font-weight-semibold);
+}

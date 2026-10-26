@@ -16,6 +16,14 @@
     "switchLanguage": "Switch language to {language}",
     "switchTheme": "Switch theme to {theme}"
   },
+  "dateInput": {
+    "placeholder": "DD/MM/YYYY",
+    "chooseDate": "Choose date",
+    "clear": "Clear date",
+    "previous": "Previous period",
+    "next": "Next period",
+    "changeView": "Choose month or year"
+  },
   "ratingControl": {
     "valueLabel": "{value} out of 5 stars",
     "clear": "Clear rating"
@@ -59,9 +67,10 @@
       "currentlyReading": "Currently reading",
       "viewLibrary": "View your library",
       "readingOverTime": "Reading over time",
+      "yearlyCompletions": "Books finished per year",
       "monthlyCompletions": "Books finished per month · {period}",
       "noCompletions": "No books finished in this period yet.",
-      "monthCompletionCount": "{month}: {count} books finished",
+      "periodCompletionCount": "{period}: {count} books finished",
       "invalidCompletionDates": "Across your library, {count} read books have missing or inconsistent finish dates and are excluded from time-based insights.",
       "libraryOverview": "Your library",
       "currentShelfSnapshot": "Current shelf counts · not filtered by year",
@@ -115,7 +124,7 @@
     "search": "Search",
     "searching": "Searching...",
     "noSearchResults": "No books matched that search.",
-    "scanBarcode": "Scan ISBN barcode",
+    "scanBarcode": "Scan ISBN",
     "stopScan": "Stop scanning",
     "scannerUnsupported": "Barcode scanning is not supported here. Enter the ISBN in the search field instead.",
     "scannerError": "The camera could not be started. Check camera permission or enter the ISBN manually.",

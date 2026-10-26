@@ -16,6 +16,14 @@
     "switchLanguage": "Αλλαγή γλώσσας σε {language}",
     "switchTheme": "Αλλαγή θέματος σε {theme}"
   },
+  "dateInput": {
+    "placeholder": "ΗΗ/ΜΜ/ΕΕΕΕ",
+    "chooseDate": "Επιλογή ημερομηνίας",
+    "clear": "Διαγραφή ημερομηνίας",
+    "previous": "Προηγούμενη περίοδος",
+    "next": "Επόμενη περίοδος",
+    "changeView": "Επιλογή μήνα ή έτους"
+  },
   "ratingControl": {
     "valueLabel": "{value} από 5 αστέρια",
     "clear": "Διαγραφή βαθμολογίας"
@@ -59,9 +67,10 @@
       "currentlyReading": "Διαβάζεις τώρα",
       "viewLibrary": "Προβολή βιβλιοθήκης",
       "readingOverTime": "Η ανάγνωση στον χρόνο",
+      "yearlyCompletions": "Ολοκληρωμένα βιβλία ανά έτος",
       "monthlyCompletions": "Ολοκληρωμένα βιβλία ανά μήνα · {period}",
       "noCompletions": "Δεν έχεις ολοκληρώσει βιβλία σε αυτή την περίοδο.",
-      "monthCompletionCount": "{month}: {count} ολοκληρωμένα βιβλία",
+      "periodCompletionCount": "{period}: {count} ολοκληρωμένα βιβλία",
       "invalidCompletionDates": "Στη βιβλιοθήκη σου, {count} βιβλία με κατάσταση «Διαβασμένα» δεν έχουν έγκυρη ημερομηνία ολοκλήρωσης και δεν υπολογίζονται στα στατιστικά χρόνου.",
       "libraryOverview": "Η βιβλιοθήκη σου",
       "currentShelfSnapshot": "Τρέχουσα εικόνα ραφιών · δεν φιλτράρεται ανά έτος",
@@ -115,7 +124,7 @@
     "search": "Αναζήτηση",
     "searching": "Αναζήτηση...",
     "noSearchResults": "Δεν βρέθηκαν βιβλία.",
-    "scanBarcode": "Σάρωση barcode ISBN",
+    "scanBarcode": "Σάρωση ISBN",
     "stopScan": "Διακοπή σάρωσης",
     "scannerUnsupported": "Η σάρωση barcode δεν υποστηρίζεται εδώ. Πληκτρολόγησε το ISBN στο πεδίο αναζήτησης.",
     "scannerError": "Δεν ήταν δυνατή η εκκίνηση της κάμερας. Έλεγξε την άδεια πρόσβασης ή πληκτρολόγησε το ISBN.",
