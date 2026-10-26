@@ -86,12 +86,18 @@
   color: var(--color-primary);
 }
 
+.account {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-inline-start: auto;
+}
+
 .user {
   display: grid;
   place-items: center;
   inline-size: var(--space-10);
   block-size: var(--space-10);
-  margin-inline-start: auto;
   flex-shrink: 0;
   border-radius: var(--radius-full);
   background: var(--color-primary);

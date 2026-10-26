@@ -10,16 +10,6 @@
 
 .cover {
   inline-size: var(--space-20);
-  aspect-ratio: 2 / 3;
-  object-fit: cover;
-  border-radius: var(--radius-lg);
-  background: var(--color-primary-soft);
-}
-
-.placeholder {
-  display: grid;
-  place-items: center;
-  color: var(--color-primary);
 }
 
 .details {
@@ -51,24 +41,16 @@
 }
 
 .input,
-.select,
 .textarea {
-  min-inline-size: 0;
-  inline-size: 100%;
-  min-block-size: var(--space-11);
-  padding: var(--space-2-5) var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  color: var(--color-text);
   background: var(--color-surface);
-  font-family: inherit;
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-normal);
 }
 
-.textarea {
-  min-block-size: var(--space-24);
-  resize: vertical;
+.dates,
+.review {
+  display: grid;
+  grid-column: 1 / -1;
+  min-inline-size: 0;
+  gap: var(--space-3);
 }
 
 .actions {
@@ -76,48 +58,6 @@
   flex-wrap: wrap;
   gap: var(--space-2);
   margin-block-start: var(--space-3);
-}
-
-.button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  min-block-size: var(--space-11);
-  padding: var(--space-2-5) var(--space-4);
-  border: 1px solid transparent;
-  border-radius: var(--radius-xl);
-  color: var(--color-primary-contrast);
-  background: var(--color-primary);
-  font-family: inherit;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  cursor: pointer;
-}
-
-.button svg {
-  inline-size: var(--space-4);
-  block-size: var(--space-4);
-}
-
-.button:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--color-primary), var(--color-text) 12%);
-}
-
-.removeButton {
-  border-color: var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-danger);
-}
-
-.removeButton:hover:not(:disabled) {
-  border-color: var(--color-danger);
-  background: var(--color-surface);
-}
-
-.button:disabled {
-  cursor: wait;
-  opacity: 0.6;
 }
 
 .collections {
@@ -152,7 +92,8 @@
     padding: var(--space-6);
   }
 
-  .fields {
+  .fields,
+  .dates {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 

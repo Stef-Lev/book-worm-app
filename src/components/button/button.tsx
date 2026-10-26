@@ -9,6 +9,7 @@ export default function Button({
   type = "button",
   className,
   children,
+  "aria-busy": busy,
   ...rest
 }: ButtonProps) {
   return (
@@ -16,8 +17,13 @@ export default function Button({
       {...rest}
       type={type}
       disabled={disabled || loading}
-      aria-busy={loading || undefined}
-      className={cn(styles.button, styles[variant], loading && styles.loading, className)}
+      aria-busy={loading || busy}
+      className={cn(
+        styles.button,
+        styles[variant],
+        loading && styles.loading,
+        className,
+      )}
     >
       {loading && <span className={styles.spinner} aria-hidden="true" />}
       <span className={styles.label}>{children}</span>

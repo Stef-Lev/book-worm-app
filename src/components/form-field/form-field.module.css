@@ -1,0 +1,21 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+  gap: var(--space-2);
+}
+
+.label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.message {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: var(--font-size-xs);
+}
+
+.error {
+  color: var(--color-danger);
+}

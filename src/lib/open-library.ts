@@ -1,3 +1,5 @@
+import { cacheLife } from "next/cache";
+
 export type CatalogBook = {
   source: "open-library";
   externalId: string;
@@ -24,36 +26,60 @@ type OpenLibraryDoc = {
 type OpenLibraryResponse = { docs?: OpenLibraryDoc[] };
 
 export async function searchOpenLibrary(query: string): Promise<CatalogBook[]> {
-  const params = new URLSearchParams({ limit: "15" });
-  if (/^[0-9Xx -]{10,17}$/.test(query)) {
-    params.set("isbn", query.replace(/[\s-]/g, ""));
+  const normalizedQuery = query.trim();
+  const normalizedIsbn = normalizedQuery
+    .replace(/^ISBN(?:-1[03])?\s*:?\s*/i, "")
+    .replace(/[\s\u2010-\u2015-]/g, "")
+    .toUpperCase();
+  const params = new URLSearchParams({
+    limit: "15",
+    fields:
+      "key,title,author_name,isbn,number_of_pages_median,first_publish_year,subject,cover_i",
+  });
+  if (/^(?:\d{9}[\dX]|\d{13})$/.test(normalizedIsbn)) {
+    params.set("isbn", normalizedIsbn);
   } else {
-    params.set("q", query);
+    params.set("q", normalizedQuery);
   }
 
-  const response = await fetch(`https://openlibrary.org/search.json?${params}`, {
-    headers: { "User-Agent": "Bookworm/1.0 (book catalog search)" },
-    signal: AbortSignal.timeout(8000),
-  });
+  return searchOpenLibraryCached(params.toString());
+}
+
+async function searchOpenLibraryCached(params: string): Promise<CatalogBook[]> {
+  "use cache";
+  cacheLife("hours");
+
+  const response = await fetch(
+    `https://openlibrary.org/search.json?${params}`,
+    {
+      headers: { "User-Agent": "Bookworm/1.0 (book catalog search)" },
+      signal: AbortSignal.timeout(8000),
+    },
+  );
   if (!response.ok) {
-    throw new Error(`Open Library search failed with status ${response.status}`);
+    throw new Error(
+      `Open Library search failed with status ${response.status}`,
+    );
   }
 
   const data = (await response.json()) as OpenLibraryResponse;
+  const searchedIsbn = new URLSearchParams(params).get("isbn");
   return (data.docs ?? []).flatMap((doc) => {
     if (!doc.key || !doc.title) return [];
-    return [{
-      source: "open-library" as const,
-      externalId: doc.key,
-      isbn: doc.isbn?.[0],
-      title: doc.title,
-      authors: doc.author_name ?? [],
-      pageCount: doc.number_of_pages_median ?? 0,
-      publishedDate: doc.first_publish_year?.toString(),
-      categories: doc.subject?.slice(0, 5) ?? [],
-      coverUrl: doc.cover_i
-        ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`
-        : undefined,
-    }];
+    return [
+      {
+        source: "open-library" as const,
+        externalId: doc.key,
+        isbn: searchedIsbn ?? doc.isbn?.[0],
+        title: doc.title,
+        authors: doc.author_name ?? [],
+        pageCount: doc.number_of_pages_median ?? 0,
+        publishedDate: doc.first_publish_year?.toString(),
+        categories: doc.subject?.slice(0, 5) ?? [],
+        coverUrl: doc.cover_i
+          ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`
+          : undefined,
+      },
+    ];
   });
 }

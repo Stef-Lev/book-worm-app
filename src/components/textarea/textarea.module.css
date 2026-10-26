@@ -1,17 +1,7 @@
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1-5);
-}
-
-.label {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-}
-
 .textarea {
   box-sizing: border-box;
   inline-size: 100%;
+  min-inline-size: 0;
   min-block-size: var(--space-24);
   padding-block: var(--space-2-5);
   padding-inline: var(--space-3);
@@ -21,6 +11,7 @@
   color: var(--color-text);
   font-family: inherit;
   font-size: var(--font-size-base);
+  font-weight: var(--font-weight-normal);
   resize: vertical;
 }
 
@@ -42,14 +33,4 @@
 
 .invalid {
   border-color: var(--color-danger);
-}
-
-.message {
-  margin: 0;
-  color: var(--color-muted);
-  font-size: var(--font-size-xs);
-}
-
-.error {
-  color: var(--color-danger);
 }

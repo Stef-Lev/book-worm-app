@@ -12,7 +12,9 @@ export default async function AppHeader({ userName, theme }: AppHeaderProps) {
   return (
     <header className={styles.header}>
       <Link href="/" className={styles.logo}>
-        <span className={styles.logoMark}><BookOpen aria-hidden="true" /></span>
+        <span className={styles.logoMark}>
+          <BookOpen aria-hidden="true" />
+        </span>
         Bookworm
       </Link>
       <form action="/search" role="search" className={styles.search}>
@@ -28,11 +30,13 @@ export default async function AppHeader({ userName, theme }: AppHeaderProps) {
       <nav className={styles.nav}>
         <Link href="/library">{t("library")}</Link>
         <Link href="/analytics">{t("analytics")}</Link>
-        <PreferencesSwitcher theme={theme} />
-        <LogoutButton />
-        <span className={styles.user} title={userName}>
-          {userName.charAt(0).toUpperCase()}
-        </span>
+        <div className={styles.account}>
+          <PreferencesSwitcher theme={theme} />
+          <LogoutButton />
+          <span className={styles.user} title={userName}>
+            {userName.charAt(0).toUpperCase()}
+          </span>
+        </div>
       </nav>
     </header>
   );

@@ -11,7 +11,14 @@
     "theme": "Θέμα",
     "light": "Φωτεινό",
     "dark": "Σκοτεινό",
-    "system": "Σύστημα"
+    "system": "Σύστημα",
+    "darkMode": "Σκοτεινή λειτουργία",
+    "switchLanguage": "Αλλαγή γλώσσας σε {language}",
+    "switchTheme": "Αλλαγή θέματος σε {theme}"
+  },
+  "ratingControl": {
+    "valueLabel": "{value} από 5 αστέρια",
+    "clear": "Διαγραφή βαθμολογίας"
   },
   "auth": {
     "loginTitle": "Σύνδεση",

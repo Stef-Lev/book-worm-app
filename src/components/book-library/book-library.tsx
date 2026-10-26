@@ -1,10 +1,24 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element -- Cover URLs are supplied by Open Library or by the user. */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { BookOpen, FolderOpen, Library, Plus, ScanBarcode, Search } from "lucide-react";
+import {
+  BookOpen,
+  FolderOpen,
+  Library,
+  Plus,
+  ScanBarcode,
+  Search,
+  X,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import BookEntry from "@/components/book-entry/book-entry";
+import Dropdown from "@/components/dropdown/dropdown";
+import Button from "@/components/button/button";
+import IconButton from "@/components/icon-button/icon-button";
+import TextInput from "@/components/text-input/text-input";
+import BookCover from "@/components/book-cover/book-cover";
+import FeedbackMessage from "@/components/feedback-message/feedback-message";
+import EmptyState from "@/components/book-library/empty-state/empty-state";
 import type {
   BookCollection,
   BookEntryData,
@@ -25,15 +39,25 @@ type CatalogBook = {
   coverUrl?: string;
 };
 
-type LibraryResponse = { entries: BookEntryData[]; collections: BookCollection[] };
+type LibraryResponse = {
+  entries: BookEntryData[];
+  collections: BookCollection[];
+};
 type SearchResponse = { results: CatalogBook[] };
 type BarcodeResult = { rawValue: string };
 type BarcodeDetectorInstance = {
   detect: (source: HTMLVideoElement) => Promise<BarcodeResult[]>;
 };
-type BarcodeDetectorConstructor = new (options: { formats: string[] }) => BarcodeDetectorInstance;
+type BarcodeDetectorConstructor = new (options: {
+  formats: string[];
+}) => BarcodeDetectorInstance;
 
-const shelves: Shelf[] = ["to-read", "currently-reading", "read", "did-not-finish"];
+const shelves: Shelf[] = [
+  "to-read",
+  "currently-reading",
+  "read",
+  "did-not-finish",
+];
 
 async function responseJson<T>(response: Response): Promise<T> {
   const data = (await response.json()) as T & { error?: string };
@@ -62,24 +86,29 @@ export default function BookLibrary({ initialQuery = "" }: BookLibraryProps) {
   const streamRef = useRef<MediaStream | null>(null);
   const scanCancelled = useRef(false);
 
-  const searchCatalog = useCallback(async (searchTerm: string, showLoading = true) => {
-    if (showLoading) {
-      setError("");
-      setMessage("");
-      setBusy(true);
-    }
-    try {
-      const params = new URLSearchParams({ q: searchTerm });
-      const data = await responseJson<SearchResponse>(await fetch(`/api/books/search?${params}`));
-      setResults(data.results);
-      if (!data.results.length) setMessage(t("noSearchResults"));
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : t("genericError"));
-      setMessage("");
-    } finally {
-      setBusy(false);
-    }
-  }, [t]);
+  const searchCatalog = useCallback(
+    async (searchTerm: string, showLoading = true) => {
+      if (showLoading) {
+        setError("");
+        setMessage("");
+        setBusy(true);
+      }
+      try {
+        const params = new URLSearchParams({ q: searchTerm });
+        const data = await responseJson<SearchResponse>(
+          await fetch(`/api/books/search?${params}`),
+        );
+        setResults(data.results);
+        if (!data.results.length) setMessage(t("noSearchResults"));
+      } catch (reason) {
+        setError(reason instanceof Error ? reason.message : t("genericError"));
+        setMessage("");
+      } finally {
+        setBusy(false);
+      }
+    },
+    [t],
+  );
 
   useEffect(() => {
     let active = true;
@@ -91,7 +120,8 @@ export default function BookLibrary({ initialQuery = "" }: BookLibraryProps) {
         setCollections(data.collections);
       })
       .catch((reason: unknown) => {
-        if (active) setError(reason instanceof Error ? reason.message : t("loadError"));
+        if (active)
+          setError(reason instanceof Error ? reason.message : t("loadError"));
       });
     return () => {
       active = false;
@@ -147,9 +177,13 @@ export default function BookLibrary({ initialQuery = "" }: BookLibraryProps) {
     return filtered.sort((a, b) => {
       switch (sortBy) {
         case "author":
-          return (a.book.authors[0] ?? "").localeCompare(b.book.authors[0] ?? "");
+          return (a.book.authors[0] ?? "").localeCompare(
+            b.book.authors[0] ?? "",
+          );
         case "category":
-          return (a.book.categories[0] ?? "").localeCompare(b.book.categories[0] ?? "");
+          return (a.book.categories[0] ?? "").localeCompare(
+            b.book.categories[0] ?? "",
+          );
         case "rating":
           return (b.rating ?? 0) - (a.rating ?? 0);
         case "date-added":
@@ -183,11 +217,15 @@ export default function BookLibrary({ initialQuery = "" }: BookLibraryProps) {
             status: searchShelf,
             collectionIds: searchCollection ? [searchCollection] : [],
           }),
-        })
+        }),
       );
-      const data = await responseJson<LibraryResponse>(await fetch("/api/library"));
+      const data = await responseJson<LibraryResponse>(
+        await fetch("/api/library"),
+      );
       setEntries(data.entries);
-      setResults((previous) => previous.filter((result) => result.externalId !== book.externalId));
+      setResults((previous) =>
+        previous.filter((result) => result.externalId !== book.externalId),
+      );
       setMessage(t("bookAdded"));
       return true;
     } catch (reason) {
@@ -236,9 +274,11 @@ export default function BookLibrary({ initialQuery = "" }: BookLibraryProps) {
             finishedAt: entry.finishedAt,
             collectionIds: entry.collectionIds,
           }),
-        })
+        }),
       );
-      const data = await responseJson<LibraryResponse>(await fetch("/api/library"));
+      const data = await responseJson<LibraryResponse>(
+        await fetch("/api/library"),
+      );
       setEntries(data.entries);
       setMessage(t("changesSaved"));
     } catch (reason) {
@@ -249,11 +289,12 @@ export default function BookLibrary({ initialQuery = "" }: BookLibraryProps) {
   }
 
   async function removeEntry(entry: BookEntryData) {
-    if (!window.confirm(t("confirmRemove", { title: entry.book.title }))) return;
+    if (!window.confirm(t("confirmRemove", { title: entry.book.title })))
+      return;
     setBusyId(entry.id);
     try {
       await responseJson(
-        await fetch(`/api/library/${entry.id}`, { method: "DELETE" })
+        await fetch(`/api/library/${entry.id}`, { method: "DELETE" }),
       );
       setEntries((previous) => previous.filter((item) => item.id !== entry.id));
       setMessage(t("bookRemoved"));
@@ -273,10 +314,12 @@ export default function BookLibrary({ initialQuery = "" }: BookLibraryProps) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name: collectionName }),
-        })
+        }),
       );
       setCollections((previous) =>
-        [...previous, response.collection].sort((a, b) => a.name.localeCompare(b.name))
+        [...previous, response.collection].sort((a, b) =>
+          a.name.localeCompare(b.name),
+        ),
       );
       setCollectionName("");
       setMessage(t("collectionCreated"));
@@ -286,17 +329,24 @@ export default function BookLibrary({ initialQuery = "" }: BookLibraryProps) {
   }
 
   async function deleteCollection(collection: BookCollection) {
-    if (!window.confirm(t("confirmDeleteCollection", { name: collection.name }))) return;
+    if (
+      !window.confirm(t("confirmDeleteCollection", { name: collection.name }))
+    )
+      return;
     try {
       await responseJson(
-        await fetch(`/api/collections/${collection.id}`, { method: "DELETE" })
+        await fetch(`/api/collections/${collection.id}`, { method: "DELETE" }),
       );
-      setCollections((previous) => previous.filter((item) => item.id !== collection.id));
+      setCollections((previous) =>
+        previous.filter((item) => item.id !== collection.id),
+      );
       setEntries((previous) =>
         previous.map((entry) => ({
           ...entry,
-          collectionIds: entry.collectionIds.filter((id) => id !== collection.id),
-        }))
+          collectionIds: entry.collectionIds.filter(
+            (id) => id !== collection.id,
+          ),
+        })),
       );
       if (collectionFilter === collection.id) setCollectionFilter("");
       setMessage(t("collectionDeleted"));
@@ -315,8 +365,9 @@ export default function BookLibrary({ initialQuery = "" }: BookLibraryProps) {
   async function startScanner() {
     setError("");
     setMessage("");
-    const detectorClass = (window as Window & { BarcodeDetector?: BarcodeDetectorConstructor })
-      .BarcodeDetector;
+    const detectorClass = (
+      window as Window & { BarcodeDetector?: BarcodeDetectorConstructor }
+    ).BarcodeDetector;
     if (!detectorClass || !navigator.mediaDevices?.getUserMedia) {
       setError(t("scannerUnsupported"));
       return;
@@ -333,7 +384,9 @@ export default function BookLibrary({ initialQuery = "" }: BookLibraryProps) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
       }
-      const detector = new detectorClass({ formats: ["ean_13", "ean_8", "upc_a", "upc_e"] });
+      const detector = new detectorClass({
+        formats: ["ean_13", "ean_8", "upc_a", "upc_e"],
+      });
       while (!scanCancelled.current && videoRef.current) {
         const detected = await detector.detect(videoRef.current);
         const isbn = detected[0]?.rawValue;
@@ -347,7 +400,9 @@ export default function BookLibrary({ initialQuery = "" }: BookLibraryProps) {
       }
     } catch (reason) {
       await stopScanner();
-      announceError(reason instanceof Error ? reason : new Error(t("scannerError")));
+      announceError(
+        reason instanceof Error ? reason : new Error(t("scannerError")),
+      );
     }
   }
 
@@ -369,15 +424,20 @@ export default function BookLibrary({ initialQuery = "" }: BookLibraryProps) {
   return (
     <main className={styles.main}>
       <section className={styles.hero}>
-        <span className={styles.heroIcon}><BookOpen aria-hidden="true" /></span>
+        <span className={styles.heroIcon}>
+          <BookOpen aria-hidden="true" />
+        </span>
         <div>
-        <h1 className={styles.heading}>{t("title")}</h1>
-        <p className={styles.muted}>{t("description")}</p>
+          <h1 className={styles.heading}>{t("title")}</h1>
+          <p className={styles.muted}>{t("description")}</p>
         </div>
       </section>
 
       <section className={styles.panel} aria-labelledby="catalog-heading">
-        <h2 className={styles.sectionTitle} id="catalog-heading"><Search aria-hidden="true" />{t("addBooks")}</h2>
+        <h2 className={styles.sectionTitle} id="catalog-heading">
+          <Search aria-hidden="true" />
+          {t("addBooks")}
+        </h2>
         <form
           className={styles.row}
           onSubmit={(event) => {
@@ -385,30 +445,28 @@ export default function BookLibrary({ initialQuery = "" }: BookLibraryProps) {
             void searchCatalog(query);
           }}
         >
-          <label className={styles.field}>
-            {t("searchBooks")}
-            <input
-              className={styles.input}
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={t("searchPlaceholder")}
-            />
-          </label>
-          <button className={styles.button} type="submit" disabled={busy}>
+          <TextInput
+            label={t("searchBooks")}
+            fieldClassName={styles.field}
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={t("searchPlaceholder")}
+          />
+          <Button type="submit" loading={busy}>
             <Search aria-hidden="true" />
             {busy ? t("searching") : t("search")}
-          </button>
+          </Button>
           {scanRunning ? (
-            <button className={`${styles.button} ${styles.secondaryButton}`} type="button" onClick={() => void stopScanner()}>
+            <Button variant="secondary" onClick={() => void stopScanner()}>
               <ScanBarcode aria-hidden="true" />
               {t("stopScan")}
-            </button>
+            </Button>
           ) : (
-            <button className={`${styles.button} ${styles.secondaryButton}`} type="button" onClick={() => void startScanner()}>
+            <Button variant="secondary" onClick={() => void startScanner()}>
               <ScanBarcode aria-hidden="true" />
               {t("scanBarcode")}
-            </button>
+            </Button>
           )}
         </form>
         <video
@@ -418,57 +476,52 @@ export default function BookLibrary({ initialQuery = "" }: BookLibraryProps) {
           playsInline
         />
         <div className={styles.row}>
-          <label className={styles.field}>
-            {t("addToShelf")}
-            <select
-              className={styles.select}
-              value={searchShelf}
-              onChange={(event) => setSearchShelf(event.target.value as Shelf)}
-            >
-              {shelves.map((shelf) => (
-                <option key={shelf} value={shelf}>{shelfNames[shelf]}</option>
-              ))}
-            </select>
-          </label>
-          <label className={styles.field}>
-            {t("addToCollection")}
-            <select
-              className={styles.select}
-              value={searchCollection}
-              onChange={(event) => setSearchCollection(event.target.value)}
-            >
-              <option value="">{t("noCollection")}</option>
-              {collections.map((collection) => (
-                <option key={collection.id} value={collection.id}>{collection.name}</option>
-              ))}
-            </select>
-          </label>
+          <Dropdown
+            label={t("addToShelf")}
+            fieldClassName={styles.field}
+            value={searchShelf}
+            onValueChange={(value) => setSearchShelf(value as Shelf)}
+            options={shelves.map((shelf) => ({
+              value: shelf,
+              label: shelfNames[shelf],
+            }))}
+          />
+          <Dropdown
+            label={t("addToCollection")}
+            fieldClassName={styles.field}
+            value={searchCollection}
+            onValueChange={setSearchCollection}
+            options={[
+              { value: "", label: t("noCollection") },
+              ...collections.map((collection) => ({
+                value: collection.id,
+                label: collection.name,
+              })),
+            ]}
+          />
         </div>
         {!!results.length && (
           <div className={styles.results}>
             {results.map((book) => (
               <article className={styles.result} key={book.externalId}>
-                {book.coverUrl ? (
-                  <img className={styles.cover} src={book.coverUrl} alt="" />
-                ) : (
-                  <div className={styles.cover} aria-hidden="true" />
-                )}
+                <BookCover className={styles.cover} src={book.coverUrl} />
                 <div>
                   <h3 className={styles.title}>{book.title}</h3>
                   <p className={styles.details}>
                     {book.authors.join(", ") || t("noAuthor")}
                     {book.pageCount ? ` · ${book.pageCount} ${t("pages")}` : ""}
-                    {book.categories.length ? ` · ${book.categories.slice(0, 2).join(", ")}` : ""}
+                    {book.categories.length
+                      ? ` · ${book.categories.slice(0, 2).join(", ")}`
+                      : ""}
                   </p>
-                  <button
-                    className={styles.button}
-                    type="button"
+                  <Button
+                    className={styles.addButton}
                     disabled={busy}
                     onClick={() => void addBook(book)}
                   >
                     <Plus aria-hidden="true" />
                     {t("addBook")}
-                  </button>
+                  </Button>
                 </div>
               </article>
             ))}
@@ -476,51 +529,102 @@ export default function BookLibrary({ initialQuery = "" }: BookLibraryProps) {
         )}
         <details className={styles.manualDetails}>
           <summary>{t("manualAdd")}</summary>
-          <form className={styles.manualForm} onSubmit={(event) => void createManualBook(event)}>
-            <label className={styles.field}>{t("titleField")}<input className={styles.input} name="title" required maxLength={300} /></label>
-            <label className={styles.field}>{t("author")}<input className={styles.input} name="author" /></label>
-            <label className={styles.field}>{t("isbn")}<input className={styles.input} name="isbn" /></label>
-            <label className={styles.field}>{t("pages")}<input className={styles.input} name="pageCount" type="number" min="0" step="1" /></label>
-            <label className={styles.field}>{t("categories")}<input className={styles.input} name="categories" placeholder={t("categoryHint")} /></label>
-            <label className={styles.field}>{t("coverUrl")}<input className={styles.input} name="coverUrl" type="url" /></label>
-            <button className={styles.button} type="submit" disabled={busy}>{t("addBook")}</button>
+          <form
+            className={styles.manualForm}
+            onSubmit={(event) => void createManualBook(event)}
+          >
+            <TextInput
+              label={t("titleField")}
+              fieldClassName={styles.field}
+              name="title"
+              required
+              maxLength={300}
+            />
+            <TextInput
+              label={t("author")}
+              fieldClassName={styles.field}
+              name="author"
+            />
+            <TextInput
+              label={t("isbn")}
+              fieldClassName={styles.field}
+              name="isbn"
+            />
+            <TextInput
+              label={t("pages")}
+              fieldClassName={styles.field}
+              name="pageCount"
+              type="number"
+              min="0"
+              step="1"
+            />
+            <TextInput
+              label={t("categories")}
+              fieldClassName={styles.field}
+              name="categories"
+              placeholder={t("categoryHint")}
+            />
+            <TextInput
+              label={t("coverUrl")}
+              fieldClassName={styles.field}
+              name="coverUrl"
+              type="url"
+            />
+            <Button type="submit" disabled={busy}>
+              {t("addBook")}
+            </Button>
           </form>
         </details>
       </section>
 
-      <section className={`${styles.panel} ${styles.collectionsPanel}`} aria-labelledby="collections-heading">
-        <h2 className={styles.sectionTitle} id="collections-heading"><FolderOpen aria-hidden="true" />{t("customCollections")}</h2>
-        <form className={styles.row} onSubmit={(event) => void createCollection(event)}>
-          <label className={styles.field}>
-            {t("collectionName")}
-            <input
-              className={styles.input}
-              value={collectionName}
-              maxLength={50}
-              onChange={(event) => setCollectionName(event.target.value)}
-            />
-          </label>
-          <button className={`${styles.button} ${styles.secondaryButton}`} type="submit"><Plus aria-hidden="true" />{t("createCollection")}</button>
+      <section
+        className={`${styles.panel} ${styles.collectionsPanel}`}
+        aria-labelledby="collections-heading"
+      >
+        <h2 className={styles.sectionTitle} id="collections-heading">
+          <FolderOpen aria-hidden="true" />
+          {t("customCollections")}
+        </h2>
+        <form
+          className={styles.row}
+          onSubmit={(event) => void createCollection(event)}
+        >
+          <TextInput
+            label={t("collectionName")}
+            fieldClassName={styles.field}
+            value={collectionName}
+            maxLength={50}
+            onChange={(event) => setCollectionName(event.target.value)}
+          />
+          <Button variant="secondary" type="submit">
+            <Plus aria-hidden="true" />
+            {t("createCollection")}
+          </Button>
         </form>
         <div className={styles.collectionActions}>
           {collections.map((collection) => (
             <span className={styles.collectionItem} key={collection.id}>
               {collection.name}
-              <button
+              <IconButton
                 className={styles.smallButton}
-                type="button"
-                aria-label={t("deleteCollection", { name: collection.name })}
+                label={t("deleteCollection", { name: collection.name })}
                 onClick={() => void deleteCollection(collection)}
               >
-                ×
-              </button>
+                <X aria-hidden="true" />
+              </IconButton>
             </span>
           ))}
         </div>
       </section>
 
-      <section className={`${styles.panel} ${styles.libraryPanel}`} aria-labelledby="library-heading">
-        <h2 className={styles.sectionTitle} id="library-heading"><Library aria-hidden="true" />{t("yourLibrary")}</h2>
+      <section
+        className={`${styles.panel} ${styles.libraryPanel}`}
+        aria-labelledby="library-heading"
+      >
+        <h2 className={styles.sectionTitle} id="library-heading">
+          <Library aria-hidden="true" />
+          {t("yourLibrary")}
+        </h2>
         <div className={styles.shelves}>
           <button
             type="button"
@@ -538,33 +642,43 @@ export default function BookLibrary({ initialQuery = "" }: BookLibraryProps) {
               onClick={() => setShelfFilter(shelf)}
               key={shelf}
             >
-              {shelfNames[shelf]} ({entries.filter((entry) => entry.status === shelf).length})
+              {shelfNames[shelf]} (
+              {entries.filter((entry) => entry.status === shelf).length})
             </button>
           ))}
         </div>
         <div className={styles.toolbar}>
-          <label className={styles.field}>
-            {t("filterCollection")}
-            <select className={styles.select} value={collectionFilter} onChange={(event) => setCollectionFilter(event.target.value)}>
-              <option value="">{t("allCollections")}</option>
-              {collections.map((collection) => <option key={collection.id} value={collection.id}>{collection.name}</option>)}
-            </select>
-          </label>
-          <label className={styles.field}>
-            {t("sortBy")}
-            <select className={styles.select} value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
-              <option value="title">{t("sortTitle")}</option>
-              <option value="author">{t("sortAuthor")}</option>
-              <option value="category">{t("sortCategory")}</option>
-              <option value="rating">{t("sortRating")}</option>
-              <option value="date-added">{t("sortDateAdded")}</option>
-              <option value="date-finished">{t("sortDateFinished")}</option>
-              <option value="page-count">{t("sortPageCount")}</option>
-            </select>
-          </label>
+          <Dropdown
+            label={t("filterCollection")}
+            fieldClassName={styles.field}
+            value={collectionFilter}
+            onValueChange={setCollectionFilter}
+            options={[
+              { value: "", label: t("allCollections") },
+              ...collections.map((collection) => ({
+                value: collection.id,
+                label: collection.name,
+              })),
+            ]}
+          />
+          <Dropdown
+            label={t("sortBy")}
+            fieldClassName={styles.field}
+            value={sortBy}
+            onValueChange={setSortBy}
+            options={[
+              { value: "title", label: t("sortTitle") },
+              { value: "author", label: t("sortAuthor") },
+              { value: "category", label: t("sortCategory") },
+              { value: "rating", label: t("sortRating") },
+              { value: "date-added", label: t("sortDateAdded") },
+              { value: "date-finished", label: t("sortDateFinished") },
+              { value: "page-count", label: t("sortPageCount") },
+            ]}
+          />
         </div>
-        {error && <p className={`${styles.message} ${styles.error}`} role="alert">{error}</p>}
-        {message && <p className={styles.message} role="status">{message}</p>}
+        <FeedbackMessage tone="error">{error}</FeedbackMessage>
+        <FeedbackMessage>{message}</FeedbackMessage>
         {entries.length ? (
           <div className={styles.entries}>
             {visibleEntries.map((entry) => (
@@ -574,9 +688,13 @@ export default function BookLibrary({ initialQuery = "" }: BookLibraryProps) {
                 collections={collections}
                 shelfNames={shelfNames}
                 labels={entryLabels}
-                onChange={(id, changes) => setEntries((previous) =>
-                  previous.map((item) => item.id === id ? { ...item, ...changes } : item)
-                )}
+                onChange={(id, changes) =>
+                  setEntries((previous) =>
+                    previous.map((item) =>
+                      item.id === id ? { ...item, ...changes } : item,
+                    ),
+                  )
+                }
                 onSave={(changed) => void saveEntry(changed)}
                 onRemove={(removed) => void removeEntry(removed)}
                 busy={busyId === entry.id}
@@ -584,13 +702,16 @@ export default function BookLibrary({ initialQuery = "" }: BookLibraryProps) {
             ))}
           </div>
         ) : (
-          <p className={styles.emptyState}><BookOpen aria-hidden="true" />{t("emptyLibrary")}</p>
+          <EmptyState icon={<BookOpen aria-hidden="true" />}>
+            {t("emptyLibrary")}
+          </EmptyState>
         )}
         {!!entries.length && !visibleEntries.length && (
-          <p className={styles.emptyState}><Search aria-hidden="true" />{t("noBooksMatch")}</p>
+          <EmptyState icon={<Search aria-hidden="true" />}>
+            {t("noBooksMatch")}
+          </EmptyState>
         )}
       </section>
-      <p className={styles.message} role="status">{error || message}</p>
     </main>
   );
 }

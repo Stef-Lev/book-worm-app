@@ -33,16 +33,17 @@
   color: var(--color-secondary-contrast);
 }
 
-.main h1 {
+.heading {
   font-size: var(--font-size-3xl);
   line-height: var(--line-height-tight);
 }
 
-.main p {
+.description,
+.footer {
   color: var(--color-muted);
 }
 
-.main p a {
+.footer a {
   color: var(--color-primary);
   text-decoration: underline;
   text-underline-offset: var(--space-1);

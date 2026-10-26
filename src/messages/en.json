@@ -11,7 +11,14 @@
     "theme": "Theme",
     "light": "Light",
     "dark": "Dark",
-    "system": "System"
+    "system": "System",
+    "darkMode": "Dark mode",
+    "switchLanguage": "Switch language to {language}",
+    "switchTheme": "Switch theme to {theme}"
+  },
+  "ratingControl": {
+    "valueLabel": "{value} out of 5 stars",
+    "clear": "Clear rating"
   },
   "auth": {
     "loginTitle": "Log in",

@@ -4,4 +4,5 @@ export type TextInputProps = InputHTMLAttributes<HTMLInputElement> & {
   label: string;
   hint?: string;
   error?: string;
+  fieldClassName?: string;
 };

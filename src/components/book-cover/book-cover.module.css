@@ -1,0 +1,33 @@
+.cover {
+  position: relative;
+  display: block;
+  inline-size: var(--space-20);
+  aspect-ratio: 2 / 3;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--color-primary-soft);
+}
+
+.image,
+.placeholder {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.image {
+  object-fit: cover;
+}
+
+.placeholder {
+  display: grid;
+  place-items: center;
+  color: var(--color-primary);
+}
+
+.icon {
+  inline-size: var(--space-6);
+  block-size: var(--space-6);
+}

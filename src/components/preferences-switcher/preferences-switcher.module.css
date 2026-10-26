@@ -4,23 +4,18 @@
   gap: var(--space-2);
 }
 
-.field {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1-5);
-  font-size: var(--font-size-sm);
+.flag {
+  inline-size: var(--space-6);
+  block-size: var(--space-4);
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
-.label {
-  color: var(--color-muted);
+.england {
+  background-image: url("/flags/england.svg");
 }
 
-.select {
-  min-block-size: var(--space-10);
-  padding-block: var(--space-2);
-  padding-inline: var(--space-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background: var(--color-bg);
-  color: var(--color-text);
+.greece {
+  background-image: url("/flags/greece.svg");
 }
