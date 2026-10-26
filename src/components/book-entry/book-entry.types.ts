@@ -12,6 +12,7 @@ export type BookEntryData = {
   book: {
     id: string;
     source: string;
+    externalId?: string;
     title: string;
     authors: string[];
     isbn?: string;
@@ -36,9 +37,14 @@ export type BookEntryProps = {
     review: string;
     startedAt: string;
     finishedAt: string;
-    collections: string;
+    status: string;
+    collection: string;
+    noCollection: string;
     save: string;
     remove: string;
+    removeTitle: string;
+    confirmRemove: (title: string) => string;
+    cancel: string;
     saving: string;
     pages: string;
   };

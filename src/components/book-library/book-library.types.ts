@@ -1,1 +1,4 @@
-export type BookLibraryProps = { initialQuery?: string };
+export type BookLibraryProps = {
+  mode: "library" | "search";
+  initialQuery?: string;
+};

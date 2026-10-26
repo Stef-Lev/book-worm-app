@@ -91,7 +91,14 @@
   cursor: progress;
 }
 
+.loading .label {
+  opacity: 0;
+}
+
 .spinner {
+  position: absolute;
+  inset: 0;
+  margin: auto;
   inline-size: 1em;
   block-size: 1em;
   border: 2px solid currentColor;

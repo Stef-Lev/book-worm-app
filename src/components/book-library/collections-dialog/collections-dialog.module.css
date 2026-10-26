@@ -1,0 +1,101 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: color-mix(in srgb, var(--color-black) 45%, transparent);
+}
+
+.positioner {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  padding: var(--space-4);
+  overflow-y: auto;
+}
+
+.dialog {
+  display: grid;
+  gap: var(--space-4);
+  inline-size: 100%;
+  max-inline-size: calc(var(--space-80) * 2);
+  max-block-size: calc(100dvh - var(--space-8));
+  min-inline-size: 0;
+  overflow-y: auto;
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: 0 var(--space-4) var(--space-8)
+    color-mix(in srgb, var(--color-black) 20%, transparent);
+}
+
+.header,
+.confirmActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  overflow-wrap: anywhere;
+}
+
+.createForm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-3);
+}
+
+.field {
+  flex: 1 1 var(--space-48);
+  min-inline-size: 0;
+}
+
+.list {
+  display: grid;
+  gap: var(--space-3);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.collectionRow {
+  display: flex;
+  align-items: end;
+  gap: var(--space-2);
+  padding-block-start: var(--space-3);
+  border-block-start: 1px solid var(--color-border);
+}
+
+.collectionRow > button,
+.header > button {
+  flex-shrink: 0;
+}
+
+.deleteButton {
+  color: var(--color-danger);
+}
+
+.empty {
+  margin: 0;
+  color: var(--color-muted);
+}
+
+.confirmation {
+  border-block-start: 1px solid var(--color-border);
+  padding-block-start: var(--space-3);
+  overflow-wrap: anywhere;
+}
+
+.confirmActions {
+  justify-content: start;
+  flex-wrap: wrap;
+}

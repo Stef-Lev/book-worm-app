@@ -1,9 +1,12 @@
+import { Suspense } from "react";
 import SearchPage from "@/components/pages/search-page/search-page";
+import type { SearchPageProps } from "@/components/pages/search-page/search-page.types";
+import RouteLoading from "@/components/route-loading/route-loading";
 
-type PageProps = { searchParams: Promise<{ q?: string | string[] }> };
-
-export default async function Page({ searchParams }: PageProps) {
-  const params = await searchParams;
-  const initialQuery = Array.isArray(params.q) ? params.q[0] : params.q;
-  return <SearchPage initialQuery={initialQuery} />;
+export default function Page({ searchParams }: SearchPageProps) {
+  return (
+    <Suspense fallback={<RouteLoading />}>
+      <SearchPage searchParams={searchParams} />
+    </Suspense>
+  );
 }

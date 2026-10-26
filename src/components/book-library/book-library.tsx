@@ -1,20 +1,21 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import {
   BookOpen,
-  FolderOpen,
+  Check,
   Library,
   Plus,
   ScanBarcode,
   Search,
-  X,
+  RotateCcw,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import BookEntry from "@/components/book-entry/book-entry";
 import Dropdown from "@/components/dropdown/dropdown";
 import Button from "@/components/button/button";
-import IconButton from "@/components/icon-button/icon-button";
+import CollectionsDialog from "@/components/book-library/collections-dialog/collections-dialog";
 import TextInput from "@/components/text-input/text-input";
 import BookCover from "@/components/book-cover/book-cover";
 import FeedbackMessage from "@/components/feedback-message/feedback-message";
@@ -65,14 +66,26 @@ async function responseJson<T>(response: Response): Promise<T> {
   return data;
 }
 
-export default function BookLibrary({ initialQuery = "" }: BookLibraryProps) {
+function normalizeIsbn(value: string) {
+  return value.replace(/[\s-]/g, "").toUpperCase();
+}
+
+export default function BookLibrary({
+  mode,
+  initialQuery = "",
+}: BookLibraryProps) {
   const t = useTranslations("libraryWorkspace");
+  const isSearch = mode === "search";
   const [entries, setEntries] = useState<BookEntryData[]>([]);
   const [collections, setCollections] = useState<BookCollection[]>([]);
   const [query, setQuery] = useState(initialQuery);
+  const [libraryQuery, setLibraryQuery] = useState("");
   const [results, setResults] = useState<CatalogBook[]>([]);
   const [shelfFilter, setShelfFilter] = useState<Shelf | "all">("all");
   const [collectionFilter, setCollectionFilter] = useState("");
+  const [authorFilter, setAuthorFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [libraryLoaded, setLibraryLoaded] = useState(false);
   const [sortBy, setSortBy] = useState("title");
   const [searchShelf, setSearchShelf] = useState<Shelf>("to-read");
   const [searchCollection, setSearchCollection] = useState("");
@@ -80,7 +93,6 @@ export default function BookLibrary({ initialQuery = "" }: BookLibraryProps) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [collectionName, setCollectionName] = useState("");
   const [scanRunning, setScanRunning] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -118,6 +130,7 @@ export default function BookLibrary({ initialQuery = "" }: BookLibraryProps) {
         if (!active) return;
         setEntries(data.entries);
         setCollections(data.collections);
+        setLibraryLoaded(true);
       })
       .catch((reason: unknown) => {
         if (active)
@@ -131,7 +144,7 @@ export default function BookLibrary({ initialQuery = "" }: BookLibraryProps) {
   }, [t]);
 
   useEffect(() => {
-    if (initialQuery.trim().length < 2) return;
+    if (!isSearch || initialQuery.trim().length < 2) return;
     let active = true;
     const params = new URLSearchParams({ q: initialQuery });
     fetch(`/api/books/search?${params}`)
@@ -148,7 +161,7 @@ export default function BookLibrary({ initialQuery = "" }: BookLibraryProps) {
     return () => {
       active = false;
     };
-  }, [initialQuery, t]);
+  }, [initialQuery, isSearch, t]);
 
   const shelfNames: Record<Shelf, string> = {
     "to-read": t("shelfToRead"),
@@ -158,8 +171,9 @@ export default function BookLibrary({ initialQuery = "" }: BookLibraryProps) {
   };
 
   const visibleEntries = useMemo(() => {
+    const search = libraryQuery.trim().toLocaleLowerCase();
+    const isbnSearch = normalizeIsbn(libraryQuery);
     const filtered = entries.filter((entry) => {
-      const search = query.trim().toLocaleLowerCase();
       const matchesQuery =
         !search ||
         [
@@ -167,11 +181,15 @@ export default function BookLibrary({ initialQuery = "" }: BookLibraryProps) {
           ...entry.book.authors,
           ...entry.book.categories,
           entry.book.isbn ?? "",
-        ].some((value) => value.toLocaleLowerCase().includes(search));
+        ].some((value) => value.toLocaleLowerCase().includes(search)) ||
+        (!!isbnSearch &&
+          normalizeIsbn(entry.book.isbn ?? "").includes(isbnSearch));
       return (
         matchesQuery &&
         (shelfFilter === "all" || entry.status === shelfFilter) &&
-        (!collectionFilter || entry.collectionIds.includes(collectionFilter))
+        (!collectionFilter || entry.collectionIds.includes(collectionFilter)) &&
+        (!authorFilter || entry.book.authors.includes(authorFilter)) &&
+        (!categoryFilter || entry.book.categories.includes(categoryFilter))
       );
     });
     return filtered.sort((a, b) => {
@@ -196,7 +214,39 @@ export default function BookLibrary({ initialQuery = "" }: BookLibraryProps) {
           return a.book.title.localeCompare(b.book.title);
       }
     });
-  }, [collectionFilter, entries, query, shelfFilter, sortBy]);
+  }, [
+    authorFilter,
+    categoryFilter,
+    collectionFilter,
+    entries,
+    libraryQuery,
+    shelfFilter,
+    sortBy,
+  ]);
+
+  const authors = [
+    ...new Set(entries.flatMap((entry) => entry.book.authors)),
+  ].sort((first, second) => first.localeCompare(second));
+  const categories = [
+    ...new Set(entries.flatMap((entry) => entry.book.categories)),
+  ].sort((first, second) => first.localeCompare(second));
+  const hasFilters =
+    !!libraryQuery ||
+    shelfFilter !== "all" ||
+    !!collectionFilter ||
+    !!authorFilter ||
+    !!categoryFilter;
+
+  function isInLibrary(book: CatalogBook) {
+    return entries.some(
+      (entry) =>
+        (book.externalId &&
+          entry.book.source === book.source &&
+          entry.book.externalId === book.externalId) ||
+        (book.isbn &&
+          normalizeIsbn(book.isbn) === normalizeIsbn(entry.book.isbn ?? "")),
+    );
+  }
 
   function announceError(reason: unknown) {
     setError(reason instanceof Error ? reason.message : t("genericError"));
@@ -204,6 +254,10 @@ export default function BookLibrary({ initialQuery = "" }: BookLibraryProps) {
   }
 
   async function addBook(book: CatalogBook): Promise<boolean> {
+    if (isInLibrary(book)) {
+      setError(t("inLibrary"));
+      return false;
+    }
     setBusy(true);
     setError("");
     setMessage("");
@@ -223,9 +277,6 @@ export default function BookLibrary({ initialQuery = "" }: BookLibraryProps) {
         await fetch("/api/library"),
       );
       setEntries(data.entries);
-      setResults((previous) =>
-        previous.filter((result) => result.externalId !== book.externalId),
-      );
       setMessage(t("bookAdded"));
       return true;
     } catch (reason) {
@@ -289,9 +340,9 @@ export default function BookLibrary({ initialQuery = "" }: BookLibraryProps) {
   }
 
   async function removeEntry(entry: BookEntryData) {
-    if (!window.confirm(t("confirmRemove", { title: entry.book.title })))
-      return;
     setBusyId(entry.id);
+    setError("");
+    setMessage("");
     try {
       await responseJson(
         await fetch(`/api/library/${entry.id}`, { method: "DELETE" }),
@@ -302,56 +353,6 @@ export default function BookLibrary({ initialQuery = "" }: BookLibraryProps) {
       announceError(reason);
     } finally {
       setBusyId("");
-    }
-  }
-
-  async function createCollection(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError("");
-    try {
-      const response = await responseJson<{ collection: BookCollection }>(
-        await fetch("/api/collections", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: collectionName }),
-        }),
-      );
-      setCollections((previous) =>
-        [...previous, response.collection].sort((a, b) =>
-          a.name.localeCompare(b.name),
-        ),
-      );
-      setCollectionName("");
-      setMessage(t("collectionCreated"));
-    } catch (reason) {
-      announceError(reason);
-    }
-  }
-
-  async function deleteCollection(collection: BookCollection) {
-    if (
-      !window.confirm(t("confirmDeleteCollection", { name: collection.name }))
-    )
-      return;
-    try {
-      await responseJson(
-        await fetch(`/api/collections/${collection.id}`, { method: "DELETE" }),
-      );
-      setCollections((previous) =>
-        previous.filter((item) => item.id !== collection.id),
-      );
-      setEntries((previous) =>
-        previous.map((entry) => ({
-          ...entry,
-          collectionIds: entry.collectionIds.filter(
-            (id) => id !== collection.id,
-          ),
-        })),
-      );
-      if (collectionFilter === collection.id) setCollectionFilter("");
-      setMessage(t("collectionDeleted"));
-    } catch (reason) {
-      announceError(reason);
     }
   }
 
@@ -414,9 +415,14 @@ export default function BookLibrary({ initialQuery = "" }: BookLibraryProps) {
     review: t("review"),
     startedAt: t("startedAt"),
     finishedAt: t("finishedAt"),
-    collections: t("collections"),
+    status: t("status"),
+    collection: t("collection"),
+    noCollection: t("noCollection"),
     save: t("save"),
     remove: t("remove"),
+    removeTitle: t("removeTitle"),
+    confirmRemove: (title: string) => t("confirmRemove", { title }),
+    cancel: t("cancel"),
     saving: t("saving"),
     pages: t("pages"),
   };
@@ -428,290 +434,338 @@ export default function BookLibrary({ initialQuery = "" }: BookLibraryProps) {
           <BookOpen aria-hidden="true" />
         </span>
         <div>
-          <h1 className={styles.heading}>{t("title")}</h1>
-          <p className={styles.muted}>{t("description")}</p>
+          <h1 className={styles.heading}>
+            {isSearch ? t("addBooks") : t("title")}
+          </h1>
         </div>
       </section>
 
-      <section className={styles.panel} aria-labelledby="catalog-heading">
-        <h2 className={styles.sectionTitle} id="catalog-heading">
-          <Search aria-hidden="true" />
-          {t("addBooks")}
-        </h2>
-        <form
-          className={styles.row}
-          onSubmit={(event) => {
-            event.preventDefault();
-            void searchCatalog(query);
-          }}
-        >
-          <TextInput
-            label={t("searchBooks")}
-            fieldClassName={styles.field}
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={t("searchPlaceholder")}
-          />
-          <Button type="submit" loading={busy}>
+      <FeedbackMessage tone="error">{error}</FeedbackMessage>
+      <FeedbackMessage>{message}</FeedbackMessage>
+
+      {isSearch && (
+        <section className={styles.panel} aria-labelledby="catalog-heading">
+          <h2 className={styles.sectionTitle} id="catalog-heading">
             <Search aria-hidden="true" />
-            {busy ? t("searching") : t("search")}
-          </Button>
-          {scanRunning ? (
-            <Button variant="secondary" onClick={() => void stopScanner()}>
-              <ScanBarcode aria-hidden="true" />
-              {t("stopScan")}
-            </Button>
-          ) : (
-            <Button variant="secondary" onClick={() => void startScanner()}>
-              <ScanBarcode aria-hidden="true" />
-              {t("scanBarcode")}
-            </Button>
-          )}
-        </form>
-        <video
-          ref={videoRef}
-          className={scanRunning ? styles.scannerVideo : styles.hidden}
-          muted
-          playsInline
-        />
-        <div className={styles.row}>
-          <Dropdown
-            label={t("addToShelf")}
-            fieldClassName={styles.field}
-            value={searchShelf}
-            onValueChange={(value) => setSearchShelf(value as Shelf)}
-            options={shelves.map((shelf) => ({
-              value: shelf,
-              label: shelfNames[shelf],
-            }))}
-          />
-          <Dropdown
-            label={t("addToCollection")}
-            fieldClassName={styles.field}
-            value={searchCollection}
-            onValueChange={setSearchCollection}
-            options={[
-              { value: "", label: t("noCollection") },
-              ...collections.map((collection) => ({
-                value: collection.id,
-                label: collection.name,
-              })),
-            ]}
-          />
-        </div>
-        {!!results.length && (
-          <div className={styles.results}>
-            {results.map((book) => (
-              <article className={styles.result} key={book.externalId}>
-                <BookCover className={styles.cover} src={book.coverUrl} />
-                <div>
-                  <h3 className={styles.title}>{book.title}</h3>
-                  <p className={styles.details}>
-                    {book.authors.join(", ") || t("noAuthor")}
-                    {book.pageCount ? ` · ${book.pageCount} ${t("pages")}` : ""}
-                    {book.categories.length
-                      ? ` · ${book.categories.slice(0, 2).join(", ")}`
-                      : ""}
-                  </p>
-                  <Button
-                    className={styles.addButton}
-                    disabled={busy}
-                    onClick={() => void addBook(book)}
-                  >
-                    <Plus aria-hidden="true" />
-                    {t("addBook")}
-                  </Button>
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
-        <details className={styles.manualDetails}>
-          <summary>{t("manualAdd")}</summary>
+            {t("addBooks")}
+          </h2>
           <form
-            className={styles.manualForm}
-            onSubmit={(event) => void createManualBook(event)}
+            className={styles.searchForm}
+            onSubmit={(event) => {
+              event.preventDefault();
+              void searchCatalog(query);
+            }}
           >
             <TextInput
-              label={t("titleField")}
+              label={t("searchBooks")}
               fieldClassName={styles.field}
-              name="title"
-              required
-              maxLength={300}
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t("searchPlaceholder")}
             />
-            <TextInput
-              label={t("author")}
-              fieldClassName={styles.field}
-              name="author"
-            />
-            <TextInput
-              label={t("isbn")}
-              fieldClassName={styles.field}
-              name="isbn"
-            />
-            <TextInput
-              label={t("pages")}
-              fieldClassName={styles.field}
-              name="pageCount"
-              type="number"
-              min="0"
-              step="1"
-            />
-            <TextInput
-              label={t("categories")}
-              fieldClassName={styles.field}
-              name="categories"
-              placeholder={t("categoryHint")}
-            />
-            <TextInput
-              label={t("coverUrl")}
-              fieldClassName={styles.field}
-              name="coverUrl"
-              type="url"
-            />
-            <Button type="submit" disabled={busy}>
-              {t("addBook")}
+            <Button type="submit" loading={busy}>
+              <Search aria-hidden="true" />
+              {t("search")}
             </Button>
+            {scanRunning ? (
+              <Button variant="secondary" onClick={() => void stopScanner()}>
+                <ScanBarcode aria-hidden="true" />
+                {t("stopScan")}
+              </Button>
+            ) : (
+              <Button variant="secondary" onClick={() => void startScanner()}>
+                <ScanBarcode aria-hidden="true" />
+                {t("scanBarcode")}
+              </Button>
+            )}
           </form>
-        </details>
-      </section>
-
-      <section
-        className={`${styles.panel} ${styles.collectionsPanel}`}
-        aria-labelledby="collections-heading"
-      >
-        <h2 className={styles.sectionTitle} id="collections-heading">
-          <FolderOpen aria-hidden="true" />
-          {t("customCollections")}
-        </h2>
-        <form
-          className={styles.row}
-          onSubmit={(event) => void createCollection(event)}
-        >
-          <TextInput
-            label={t("collectionName")}
-            fieldClassName={styles.field}
-            value={collectionName}
-            maxLength={50}
-            onChange={(event) => setCollectionName(event.target.value)}
+          <video
+            ref={videoRef}
+            className={scanRunning ? styles.scannerVideo : styles.hidden}
+            muted
+            playsInline
           />
-          <Button variant="secondary" type="submit">
-            <Plus aria-hidden="true" />
-            {t("createCollection")}
-          </Button>
-        </form>
-        <div className={styles.collectionActions}>
-          {collections.map((collection) => (
-            <span className={styles.collectionItem} key={collection.id}>
-              {collection.name}
-              <IconButton
-                className={styles.smallButton}
-                label={t("deleteCollection", { name: collection.name })}
-                onClick={() => void deleteCollection(collection)}
-              >
-                <X aria-hidden="true" />
-              </IconButton>
-            </span>
-          ))}
-        </div>
-      </section>
-
-      <section
-        className={`${styles.panel} ${styles.libraryPanel}`}
-        aria-labelledby="library-heading"
-      >
-        <h2 className={styles.sectionTitle} id="library-heading">
-          <Library aria-hidden="true" />
-          {t("yourLibrary")}
-        </h2>
-        <div className={styles.shelves}>
-          <button
-            type="button"
-            className={`${styles.shelfButton} ${shelfFilter === "all" ? styles.activeShelf : ""}`}
-            aria-pressed={shelfFilter === "all"}
-            onClick={() => setShelfFilter("all")}
-          >
-            {t("allBooks")} ({entries.length})
-          </button>
-          {shelves.map((shelf) => (
-            <button
-              type="button"
-              className={`${styles.shelfButton} ${shelfFilter === shelf ? styles.activeShelf : ""}`}
-              aria-pressed={shelfFilter === shelf}
-              onClick={() => setShelfFilter(shelf)}
-              key={shelf}
-            >
-              {shelfNames[shelf]} (
-              {entries.filter((entry) => entry.status === shelf).length})
-            </button>
-          ))}
-        </div>
-        <div className={styles.toolbar}>
-          <Dropdown
-            label={t("filterCollection")}
-            fieldClassName={styles.field}
-            value={collectionFilter}
-            onValueChange={setCollectionFilter}
-            options={[
-              { value: "", label: t("allCollections") },
-              ...collections.map((collection) => ({
-                value: collection.id,
-                label: collection.name,
-              })),
-            ]}
-          />
-          <Dropdown
-            label={t("sortBy")}
-            fieldClassName={styles.field}
-            value={sortBy}
-            onValueChange={setSortBy}
-            options={[
-              { value: "title", label: t("sortTitle") },
-              { value: "author", label: t("sortAuthor") },
-              { value: "category", label: t("sortCategory") },
-              { value: "rating", label: t("sortRating") },
-              { value: "date-added", label: t("sortDateAdded") },
-              { value: "date-finished", label: t("sortDateFinished") },
-              { value: "page-count", label: t("sortPageCount") },
-            ]}
-          />
-        </div>
-        <FeedbackMessage tone="error">{error}</FeedbackMessage>
-        <FeedbackMessage>{message}</FeedbackMessage>
-        {entries.length ? (
-          <div className={styles.entries}>
-            {visibleEntries.map((entry) => (
-              <BookEntry
-                key={entry.id}
-                entry={entry}
-                collections={collections}
-                shelfNames={shelfNames}
-                labels={entryLabels}
-                onChange={(id, changes) =>
-                  setEntries((previous) =>
-                    previous.map((item) =>
-                      item.id === id ? { ...item, ...changes } : item,
-                    ),
-                  )
-                }
-                onSave={(changed) => void saveEntry(changed)}
-                onRemove={(removed) => void removeEntry(removed)}
-                busy={busyId === entry.id}
-              />
-            ))}
+          <div className={styles.row}>
+            <Dropdown
+              label={t("addToShelf")}
+              fieldClassName={styles.field}
+              value={searchShelf}
+              onValueChange={(value) => setSearchShelf(value as Shelf)}
+              options={shelves.map((shelf) => ({
+                value: shelf,
+                label: shelfNames[shelf],
+              }))}
+            />
+            <Dropdown
+              label={t("addToCollection")}
+              fieldClassName={styles.field}
+              value={searchCollection}
+              onValueChange={setSearchCollection}
+              options={[
+                { value: "", label: t("noCollection") },
+                ...collections.map((collection) => ({
+                  value: collection.id,
+                  label: collection.name,
+                })),
+              ]}
+            />
           </div>
-        ) : (
-          <EmptyState icon={<BookOpen aria-hidden="true" />}>
-            {t("emptyLibrary")}
-          </EmptyState>
-        )}
-        {!!entries.length && !visibleEntries.length && (
-          <EmptyState icon={<Search aria-hidden="true" />}>
-            {t("noBooksMatch")}
-          </EmptyState>
-        )}
-      </section>
+          {!!results.length && (
+            <div className={styles.results}>
+              {results.map((book) => (
+                <article className={styles.result} key={book.externalId}>
+                  <BookCover className={styles.cover} src={book.coverUrl} />
+                  <div>
+                    <h3 className={styles.title}>{book.title}</h3>
+                    <p className={styles.details}>
+                      {book.authors.join(", ") || t("noAuthor")}
+                      {book.pageCount
+                        ? ` · ${book.pageCount} ${t("pages")}`
+                        : ""}
+                      {book.categories.length
+                        ? ` · ${book.categories.slice(0, 2).join(", ")}`
+                        : ""}
+                    </p>
+                    <Button
+                      className={styles.addButton}
+                      disabled={busy || !libraryLoaded || isInLibrary(book)}
+                      onClick={() => void addBook(book)}
+                    >
+                      {isInLibrary(book) ? (
+                        <Check aria-hidden="true" />
+                      ) : (
+                        <Plus aria-hidden="true" />
+                      )}
+                      {isInLibrary(book) ? t("inLibrary") : t("addBook")}
+                    </Button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+          <details className={styles.manualDetails}>
+            <summary>{t("manualAdd")}</summary>
+            <form
+              className={styles.manualForm}
+              onSubmit={(event) => void createManualBook(event)}
+            >
+              <TextInput
+                label={t("titleField")}
+                fieldClassName={styles.field}
+                name="title"
+                required
+                maxLength={300}
+              />
+              <TextInput
+                label={t("author")}
+                fieldClassName={styles.field}
+                name="author"
+              />
+              <TextInput
+                label={t("isbn")}
+                fieldClassName={styles.field}
+                name="isbn"
+              />
+              <TextInput
+                label={t("pages")}
+                fieldClassName={styles.field}
+                name="pageCount"
+                type="number"
+                min="0"
+                step="1"
+              />
+              <TextInput
+                label={t("categories")}
+                fieldClassName={styles.field}
+                name="categories"
+                placeholder={t("categoryHint")}
+              />
+              <TextInput
+                label={t("coverUrl")}
+                fieldClassName={styles.field}
+                name="coverUrl"
+                type="url"
+              />
+              <Button type="submit" disabled={busy || !libraryLoaded}>
+                {t("addBook")}
+              </Button>
+            </form>
+          </details>
+        </section>
+      )}
+
+      {!isSearch && (
+        <>
+          <section
+            className={`${styles.panel} ${styles.libraryPanel}`}
+            aria-labelledby="library-heading"
+          >
+            <h2 className={styles.sectionTitle} id="library-heading">
+              <Library aria-hidden="true" />
+              {t("yourLibrary")}
+            </h2>
+            <TextInput
+              label={t("searchLibrary")}
+              fieldClassName={styles.field}
+              type="search"
+              value={libraryQuery}
+              placeholder={t("librarySearchPlaceholder")}
+              onChange={(event) => setLibraryQuery(event.target.value)}
+            />
+            <div className={styles.shelves}>
+              <button
+                type="button"
+                className={`${styles.shelfButton} ${shelfFilter === "all" ? styles.activeShelf : ""}`}
+                aria-pressed={shelfFilter === "all"}
+                onClick={() => setShelfFilter("all")}
+              >
+                {t("allBooks")} ({entries.length})
+              </button>
+              {shelves.map((shelf) => (
+                <button
+                  type="button"
+                  className={`${styles.shelfButton} ${shelfFilter === shelf ? styles.activeShelf : ""}`}
+                  aria-pressed={shelfFilter === shelf}
+                  onClick={() => setShelfFilter(shelf)}
+                  key={shelf}
+                >
+                  {shelfNames[shelf]} (
+                  {entries.filter((entry) => entry.status === shelf).length})
+                </button>
+              ))}
+            </div>
+            <div className={styles.toolbar}>
+              <Dropdown
+                label={t("filterAuthor")}
+                fieldClassName={styles.field}
+                value={authorFilter}
+                onValueChange={setAuthorFilter}
+                options={[
+                  { value: "", label: t("allAuthors") },
+                  ...authors.map((author) => ({
+                    value: author,
+                    label: author,
+                  })),
+                ]}
+              />
+              <Dropdown
+                label={t("filterCategory")}
+                fieldClassName={styles.field}
+                value={categoryFilter}
+                onValueChange={setCategoryFilter}
+                options={[
+                  { value: "", label: t("allCategories") },
+                  ...categories.map((category) => ({
+                    value: category,
+                    label: category,
+                  })),
+                ]}
+              />
+              <div className={styles.collectionFilter}>
+                <Dropdown
+                  label={t("filterCollection")}
+                  fieldClassName={styles.field}
+                  value={collectionFilter}
+                  onValueChange={setCollectionFilter}
+                  options={[
+                    { value: "", label: t("allCollections") },
+                    ...collections.map((collection) => ({
+                      value: collection.id,
+                      label: collection.name,
+                    })),
+                  ]}
+                />
+                <CollectionsDialog
+                  collections={collections}
+                  onChange={setCollections}
+                  disabled={!libraryLoaded}
+                  onDeleted={(id) => {
+                    setEntries((previous) =>
+                      previous.map((entry) => ({
+                        ...entry,
+                        collectionIds: entry.collectionIds.filter(
+                          (collectionId) => collectionId !== id,
+                        ),
+                      })),
+                    );
+                    if (collectionFilter === id) setCollectionFilter("");
+                    if (searchCollection === id) setSearchCollection("");
+                  }}
+                />
+              </div>
+              <Dropdown
+                label={t("sortBy")}
+                fieldClassName={styles.field}
+                value={sortBy}
+                onValueChange={setSortBy}
+                options={[
+                  { value: "title", label: t("sortTitle") },
+                  { value: "author", label: t("sortAuthor") },
+                  { value: "category", label: t("sortCategory") },
+                  { value: "rating", label: t("sortRating") },
+                  { value: "date-added", label: t("sortDateAdded") },
+                  { value: "date-finished", label: t("sortDateFinished") },
+                  { value: "page-count", label: t("sortPageCount") },
+                ]}
+              />
+            </div>
+            {hasFilters && (
+              <Button
+                variant="secondary"
+                className={styles.resetButton}
+                onClick={() => {
+                  setLibraryQuery("");
+                  setShelfFilter("all");
+                  setCollectionFilter("");
+                  setAuthorFilter("");
+                  setCategoryFilter("");
+                }}
+              >
+                <RotateCcw aria-hidden="true" />
+                {t("clearFilters")}
+              </Button>
+            )}
+            {!libraryLoaded ? (
+              <p role="status">
+                {error ? t("loadError") : t("loadingLibrary")}
+              </p>
+            ) : entries.length ? (
+              <div className={styles.entries}>
+                {visibleEntries.map((entry) => (
+                  <BookEntry
+                    key={entry.id}
+                    entry={entry}
+                    collections={collections}
+                    shelfNames={shelfNames}
+                    labels={entryLabels}
+                    onChange={(id, changes) =>
+                      setEntries((previous) =>
+                        previous.map((item) =>
+                          item.id === id ? { ...item, ...changes } : item,
+                        ),
+                      )
+                    }
+                    onSave={(changed) => void saveEntry(changed)}
+                    onRemove={(removed) => void removeEntry(removed)}
+                    busy={busyId === entry.id}
+                  />
+                ))}
+              </div>
+            ) : (
+              <EmptyState icon={<BookOpen aria-hidden="true" />}>
+                {t("emptyLibrary")}
+                <Link href="/search">{t("addBooks")}</Link>
+              </EmptyState>
+            )}
+            {!!entries.length && !visibleEntries.length && (
+              <EmptyState icon={<Search aria-hidden="true" />}>
+                {t("noBooksMatch")}
+              </EmptyState>
+            )}
+          </section>
+        </>
+      )}
     </main>
   );
 }
