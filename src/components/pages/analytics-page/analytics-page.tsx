@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import Link from "@/components/navigation-link/navigation-link";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { getLocale, getTranslations } from "next-intl/server";
 import { auth } from "@/auth";
 import BookCover from "@/components/book-cover/book-cover";
@@ -37,6 +38,8 @@ function getYearFilter(
 }
 
 export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps) {
+  // auth() and the date math below are request-time only; keep them out of prerender.
+  await connection();
   const [{ year: yearParam }, session, t, locale] = await Promise.all([
     searchParams,
     auth(),

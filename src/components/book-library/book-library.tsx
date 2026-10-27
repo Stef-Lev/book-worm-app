@@ -267,10 +267,12 @@ export default function BookLibrary({
     return () => window.removeEventListener("popstate", syncFromUrl);
   }, [isSearch]);
 
-  const visibleEntries = useMemo(() => {
-    const search = libraryQuery.trim().toLocaleLowerCase();
-    const isbnSearch = normalizeIsbn(libraryQuery);
-    const filtered = entries.filter((entry) => {
+  type FacetKey = "shelf" | "author" | "category" | "collection";
+
+  const matchesFilters = useCallback(
+    (entry: BookEntryData, ignore?: FacetKey) => {
+      const search = libraryQuery.trim().toLocaleLowerCase();
+      const isbnSearch = normalizeIsbn(libraryQuery);
       const matchesQuery =
         !search ||
         [
@@ -283,12 +285,25 @@ export default function BookLibrary({
           normalizeIsbn(entry.book.isbn ?? "").includes(isbnSearch));
       return (
         matchesQuery &&
-        (shelfFilter === "all" || entry.status === shelfFilter) &&
-        (!collectionFilter || entry.collectionIds.includes(collectionFilter)) &&
-        (!authorFilter || entry.book.authors.includes(authorFilter)) &&
-        (!categoryFilter || entry.book.categories.includes(categoryFilter))
+        (ignore === "shelf" ||
+          shelfFilter === "all" ||
+          entry.status === shelfFilter) &&
+        (ignore === "collection" ||
+          !collectionFilter ||
+          entry.collectionIds.includes(collectionFilter)) &&
+        (ignore === "author" ||
+          !authorFilter ||
+          entry.book.authors.includes(authorFilter)) &&
+        (ignore === "category" ||
+          !categoryFilter ||
+          entry.book.categories.includes(categoryFilter))
       );
-    });
+    },
+    [authorFilter, categoryFilter, collectionFilter, libraryQuery, shelfFilter],
+  );
+
+  const visibleEntries = useMemo(() => {
+    const filtered = entries.filter((entry) => matchesFilters(entry));
     return filtered.sort((a, b) => {
       switch (sortBy) {
         case "author":
@@ -305,27 +320,33 @@ export default function BookLibrary({
           return a.book.title.localeCompare(b.book.title);
       }
     });
-  }, [
-    authorFilter,
-    categoryFilter,
-    collectionFilter,
-    entries,
-    libraryQuery,
-    shelfFilter,
-    sortBy,
-  ]);
+  }, [entries, matchesFilters, sortBy]);
 
-  const authors = [
-    ...new Set(entries.flatMap((entry) => entry.book.authors)),
-  ].sort((first, second) => first.localeCompare(second));
-  const categories = [
-    ...new Set(entries.flatMap((entry) => entry.book.categories)),
-  ].sort((first, second) => first.localeCompare(second));
+  // Each facet lists only values present in books matching the *other* filters.
+  const facetEntries = (facet: FacetKey) =>
+    entries.filter((entry) => matchesFilters(entry, facet));
+  const uniqueSorted = (values: string[], selected: string) =>
+    [...new Set(selected ? [...values, selected] : values)].sort(
+      (first, second) => first.localeCompare(second),
+    );
+
+  const shelfEntries = facetEntries("shelf");
+  const authors = uniqueSorted(
+    facetEntries("author").flatMap((entry) => entry.book.authors),
+    authorFilter,
+  );
+  const categories = uniqueSorted(
+    facetEntries("category").flatMap((entry) => entry.book.categories),
+    categoryFilter,
+  );
+  const collectionIdsInUse = new Set(
+    facetEntries("collection").flatMap((entry) => entry.collectionIds),
+  );
   const statusOptions = [
-    { value: "all", label: `${t("allBooks")} (${entries.length})` },
+    { value: "all", label: `${t("allBooks")} (${shelfEntries.length})` },
     ...shelves.map((shelf) => ({
       value: shelf,
-      label: `${shelfNames[shelf]} (${entries.filter((entry) => entry.status === shelf).length})`,
+      label: `${shelfNames[shelf]} (${shelfEntries.filter((entry) => entry.status === shelf).length})`,
     })),
   ];
   const authorOptions = [
@@ -338,10 +359,16 @@ export default function BookLibrary({
   ];
   const collectionOptions = [
     { value: "", label: t("allCollections") },
-    ...collections.map((collection) => ({
-      value: collection.id,
-      label: collection.name,
-    })),
+    ...collections
+      .filter(
+        (collection) =>
+          collectionIdsInUse.has(collection.id) ||
+          collection.id === collectionFilter,
+      )
+      .map((collection) => ({
+        value: collection.id,
+        label: collection.name,
+      })),
   ];
   const sortOptions = [
     { value: "title", label: t("sortTitle") },
