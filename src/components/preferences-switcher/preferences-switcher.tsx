@@ -4,10 +4,10 @@ import { useState, useSyncExternalStore, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Moon, Sun } from "lucide-react";
+import { CircleFlag } from "react-circle-flags";
 import IconButton from "@/components/icon-button/icon-button";
 import { LOCALE_COOKIE, LOCALE_LABELS } from "@/i18n/config";
 import { COOKIE_MAX_AGE, THEME_COOKIE } from "@/lib/preferences";
-import { cn } from "@/lib/cn";
 import styles from "./preferences-switcher.module.css";
 import type { PreferencesSwitcherProps } from "./preferences-switcher.types";
 
@@ -70,11 +70,12 @@ export default function PreferencesSwitcher({
         disabled={isPending}
         aria-busy={isPending}
       >
-        <span
-          className={cn(
-            styles.flag,
-            locale === "el" ? styles.greece : styles.england,
-          )}
+        <CircleFlag
+          className={styles.flag}
+          countryCode={locale === "el" ? "gr" : "gb"}
+          width={24}
+          height={24}
+          alt=""
           aria-hidden="true"
         />
       </IconButton>

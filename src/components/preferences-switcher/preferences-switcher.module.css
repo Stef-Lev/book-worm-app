@@ -6,16 +6,5 @@
 
 .flag {
   inline-size: var(--space-6);
-  block-size: var(--space-4);
-  background-size: contain;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-.england {
-  background-image: url("/flags/england.svg");
-}
-
-.greece {
-  background-image: url("/flags/greece.svg");
+  block-size: var(--space-6);
 }

@@ -35,7 +35,9 @@ export default function StarRating({
           }),
       }}
     >
-      <RatingGroup.Label className={readOnly ? styles.readOnlyLabel : styles.label}>
+      <RatingGroup.Label
+        className={readOnly ? styles.readOnlyLabel : styles.label}
+      >
         {label}
       </RatingGroup.Label>
       <div className={styles.controls}>
@@ -55,6 +57,7 @@ export default function StarRating({
         </RatingGroup.Control>
         {!readOnly && (
           <IconButton
+            className={styles.clearButton}
             label={t("clear")}
             onClick={() => onValueChange?.(null)}
             disabled={disabled || value === null}
