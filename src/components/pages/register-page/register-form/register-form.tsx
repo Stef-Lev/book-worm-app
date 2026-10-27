@@ -2,17 +2,21 @@
 
 import { useActionState } from "react";
 import { useTranslations } from "next-intl";
+import { toast } from "react-toastify";
 import Button from "@/components/button/button";
 import TextInput from "@/components/text-input/text-input";
-import FeedbackMessage from "@/components/feedback-message/feedback-message";
 import { registerAction } from "@/actions/auth";
 import type { AuthFormState } from "@/actions/auth";
 import styles from "./register-form.module.css";
 
 export default function RegisterForm() {
   const t = useTranslations("auth");
-  const [state, action, pending] = useActionState<AuthFormState, FormData>(
-    registerAction,
+  const [, action, pending] = useActionState<AuthFormState, FormData>(
+    async (previous, formData) => {
+      const next = await registerAction(previous, formData);
+      if (next.error) toast.error(t(`errors.${next.error}`));
+      return next;
+    },
     {},
   );
 
@@ -43,9 +47,6 @@ export default function RegisterForm() {
         autoComplete="new-password"
         className={styles.input}
       />
-      <FeedbackMessage tone="error">
-        {state.error ? t(`errors.${state.error}`) : null}
-      </FeedbackMessage>
       <Button type="submit" loading={pending} className={styles.submit}>
         {t("registerSubmit")}
       </Button>

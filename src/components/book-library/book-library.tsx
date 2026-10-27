@@ -10,17 +10,22 @@ import {
   Plus,
   ScanBarcode,
   Search,
-  RotateCcw,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { toast } from "react-toastify";
 import BookEntry from "@/components/book-entry/book-entry";
 import Dropdown from "@/components/dropdown/dropdown";
 import Button from "@/components/button/button";
 import CollectionsDialog from "@/components/book-library/collections-dialog/collections-dialog";
 import TextInput from "@/components/text-input/text-input";
 import BookCover from "@/components/book-cover/book-cover";
-import FeedbackMessage from "@/components/feedback-message/feedback-message";
 import EmptyState from "@/components/book-library/empty-state/empty-state";
+import LibraryFiltersDrawer from "@/components/book-library/library-filters-drawer/library-filters-drawer";
+import LibraryFiltersSidebar from "@/components/book-library/library-filters-sidebar/library-filters-sidebar";
+import type {
+  LibraryFilterSection,
+  LibraryFilterValues,
+} from "@/components/book-library/library-filters-drawer/library-filters-drawer.types";
 import type {
   BookCollection,
   BookEntryData,
@@ -54,6 +59,14 @@ type BarcodeDetectorConstructor = new (options: {
   formats: string[];
 }) => BarcodeDetectorInstance;
 
+const filterDefaults: LibraryFilterValues = {
+  shelf: "all",
+  author: "",
+  category: "",
+  collection: "",
+  sortBy: "title",
+};
+
 const shelves: Shelf[] = [
   "to-read",
   "currently-reading",
@@ -67,6 +80,24 @@ async function responseJson<T>(response: Response): Promise<T> {
   return data;
 }
 
+// Entries without a value (unrated, unfinished) always sort after those with one.
+function compareMissingLast<T>(
+  first: T | null | undefined,
+  second: T | null | undefined,
+  compare: (first: T, second: T) => number,
+) {
+  if (first == null || first === "")
+    return second == null || second === "" ? 0 : 1;
+  if (second == null || second === "") return -1;
+  return compare(first, second);
+}
+
+const sortValues = ["title", "author", "rating", "page-count", "date-added"];
+
+function toShelfFilter(value: string): Shelf | "all" {
+  return shelves.find((shelf) => shelf === value) ?? "all";
+}
+
 function normalizeIsbn(value: string) {
   return value.replace(/[\s-]/g, "").toUpperCase();
 }
@@ -74,26 +105,36 @@ function normalizeIsbn(value: string) {
 export default function BookLibrary({
   mode,
   initialQuery = "",
+  initialFilters = {},
 }: BookLibraryProps) {
   const t = useTranslations("libraryWorkspace");
   const isSearch = mode === "search";
   const [entries, setEntries] = useState<BookEntryData[]>([]);
   const [collections, setCollections] = useState<BookCollection[]>([]);
   const [query, setQuery] = useState(initialQuery);
-  const [libraryQuery, setLibraryQuery] = useState("");
+  const [libraryQuery, setLibraryQuery] = useState(initialFilters.q ?? "");
   const [results, setResults] = useState<CatalogBook[]>([]);
-  const [shelfFilter, setShelfFilter] = useState<Shelf | "all">("all");
-  const [collectionFilter, setCollectionFilter] = useState("");
-  const [authorFilter, setAuthorFilter] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
+  const [shelfFilter, setShelfFilter] = useState<Shelf | "all">(() =>
+    toShelfFilter(initialFilters.status ?? ""),
+  );
+  const [collectionFilter, setCollectionFilter] = useState(
+    initialFilters.collection ?? "",
+  );
+  const [authorFilter, setAuthorFilter] = useState(initialFilters.author ?? "");
+  const [categoryFilter, setCategoryFilter] = useState(
+    initialFilters.category ?? "",
+  );
   const [libraryLoaded, setLibraryLoaded] = useState(false);
-  const [sortBy, setSortBy] = useState("title");
+  const [libraryLoadFailed, setLibraryLoadFailed] = useState(false);
+  const [sortBy, setSortBy] = useState(() =>
+    sortValues.includes(initialFilters.sort ?? "")
+      ? (initialFilters.sort ?? "title")
+      : "title",
+  );
   const [searchShelf, setSearchShelf] = useState<Shelf>("to-read");
   const [searchCollection, setSearchCollection] = useState("");
   const [busyId, setBusyId] = useState("");
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
   const [scanRunning, setScanRunning] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -102,8 +143,6 @@ export default function BookLibrary({
   const searchCatalog = useCallback(
     async (searchTerm: string, showLoading = true) => {
       if (showLoading) {
-        setError("");
-        setMessage("");
         setBusy(true);
       }
       try {
@@ -112,10 +151,11 @@ export default function BookLibrary({
           await fetch(`/api/books/search?${params}`),
         );
         setResults(data.results);
-        if (!data.results.length) setMessage(t("noSearchResults"));
+        if (!data.results.length) toast.info(t("noSearchResults"));
       } catch (reason) {
-        setError(reason instanceof Error ? reason.message : t("genericError"));
-        setMessage("");
+        toast.error(
+          reason instanceof Error ? reason.message : t("genericError"),
+        );
       } finally {
         setBusy(false);
       }
@@ -132,10 +172,12 @@ export default function BookLibrary({
         setEntries(data.entries);
         setCollections(data.collections);
         setLibraryLoaded(true);
+        setLibraryLoadFailed(false);
       })
       .catch((reason: unknown) => {
-        if (active)
-          setError(reason instanceof Error ? reason.message : t("loadError"));
+        if (!active) return;
+        setLibraryLoadFailed(true);
+        toast.error(reason instanceof Error ? reason.message : t("loadError"));
       });
     return () => {
       active = false;
@@ -153,11 +195,13 @@ export default function BookLibrary({
       .then((data) => {
         if (!active) return;
         setResults(data.results);
-        if (!data.results.length) setMessage(t("noSearchResults"));
+        if (!data.results.length) toast.info(t("noSearchResults"));
       })
       .catch((reason: unknown) => {
         if (!active) return;
-        setError(reason instanceof Error ? reason.message : t("genericError"));
+        toast.error(
+          reason instanceof Error ? reason.message : t("genericError"),
+        );
       });
     return () => {
       active = false;
@@ -170,6 +214,58 @@ export default function BookLibrary({
     read: t("shelfRead"),
     "did-not-finish": t("shelfDidNotFinish"),
   };
+
+  useEffect(() => {
+    if (isSearch) return;
+    const params = new URLSearchParams();
+    const values: [string, string, string][] = [
+      ["q", libraryQuery.trim(), ""],
+      ["status", shelfFilter, "all"],
+      ["author", authorFilter, ""],
+      ["category", categoryFilter, ""],
+      ["collection", collectionFilter, ""],
+      ["sort", sortBy, "title"],
+    ];
+    for (const [key, value, fallback] of values) {
+      if (value !== fallback) params.set(key, value);
+    }
+    const search = params.toString();
+    const current = new URLSearchParams(window.location.search);
+    if (search === current.toString()) return;
+    const url = `${window.location.pathname}${search ? `?${search}` : ""}`;
+    // Filter/sort changes get their own history entry; typing in search does not.
+    params.delete("q");
+    current.delete("q");
+    if (params.toString() === current.toString()) {
+      window.history.replaceState(null, "", url);
+    } else {
+      window.history.pushState(null, "", url);
+    }
+  }, [
+    authorFilter,
+    categoryFilter,
+    collectionFilter,
+    isSearch,
+    libraryQuery,
+    shelfFilter,
+    sortBy,
+  ]);
+
+  useEffect(() => {
+    if (isSearch) return;
+    function syncFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const sort = params.get("sort") ?? "";
+      setLibraryQuery(params.get("q") ?? "");
+      setShelfFilter(toShelfFilter(params.get("status") ?? ""));
+      setAuthorFilter(params.get("author") ?? "");
+      setCategoryFilter(params.get("category") ?? "");
+      setCollectionFilter(params.get("collection") ?? "");
+      setSortBy(sortValues.includes(sort) ? sort : "title");
+    }
+    window.addEventListener("popstate", syncFromUrl);
+    return () => window.removeEventListener("popstate", syncFromUrl);
+  }, [isSearch]);
 
   const visibleEntries = useMemo(() => {
     const search = libraryQuery.trim().toLocaleLowerCase();
@@ -199,18 +295,12 @@ export default function BookLibrary({
           return (a.book.authors[0] ?? "").localeCompare(
             b.book.authors[0] ?? "",
           );
-        case "category":
-          return (a.book.categories[0] ?? "").localeCompare(
-            b.book.categories[0] ?? "",
-          );
         case "rating":
-          return (b.rating ?? 0) - (a.rating ?? 0);
+          return compareMissingLast(a.rating, b.rating, (x, y) => y - x);
+        case "page-count":
+          return b.book.pageCount - a.book.pageCount;
         case "date-added":
           return b.createdAt.localeCompare(a.createdAt);
-        case "date-finished":
-          return (b.finishedAt ?? "").localeCompare(a.finishedAt ?? "");
-        case "page-count":
-          return a.book.pageCount - b.book.pageCount;
         default:
           return a.book.title.localeCompare(b.book.title);
       }
@@ -231,12 +321,58 @@ export default function BookLibrary({
   const categories = [
     ...new Set(entries.flatMap((entry) => entry.book.categories)),
   ].sort((first, second) => first.localeCompare(second));
-  const hasFilters =
-    !!libraryQuery ||
-    shelfFilter !== "all" ||
-    !!collectionFilter ||
-    !!authorFilter ||
-    !!categoryFilter;
+  const statusOptions = [
+    { value: "all", label: `${t("allBooks")} (${entries.length})` },
+    ...shelves.map((shelf) => ({
+      value: shelf,
+      label: `${shelfNames[shelf]} (${entries.filter((entry) => entry.status === shelf).length})`,
+    })),
+  ];
+  const authorOptions = [
+    { value: "", label: t("allAuthors") },
+    ...authors.map((author) => ({ value: author, label: author })),
+  ];
+  const categoryOptions = [
+    { value: "", label: t("allCategories") },
+    ...categories.map((category) => ({ value: category, label: category })),
+  ];
+  const collectionOptions = [
+    { value: "", label: t("allCollections") },
+    ...collections.map((collection) => ({
+      value: collection.id,
+      label: collection.name,
+    })),
+  ];
+  const sortOptions = [
+    { value: "title", label: t("sortTitle") },
+    { value: "author", label: t("sortAuthor") },
+    { value: "rating", label: t("sortRating") },
+    { value: "page-count", label: t("sortPageCount") },
+    { value: "date-added", label: t("sortDateAdded") },
+  ];
+
+  const filterValues: LibraryFilterValues = {
+    shelf: shelfFilter,
+    author: authorFilter,
+    category: categoryFilter,
+    collection: collectionFilter,
+    sortBy,
+  };
+  const filterSections: LibraryFilterSection[] = [
+    { key: "sortBy", label: t("sortBy"), options: sortOptions },
+    { key: "shelf", label: t("status"), options: statusOptions },
+    { key: "author", label: t("author"), options: authorOptions },
+    { key: "category", label: t("categories"), options: categoryOptions },
+    { key: "collection", label: t("collection"), options: collectionOptions },
+  ];
+
+  function applyFilters(values: LibraryFilterValues) {
+    setShelfFilter(toShelfFilter(values.shelf));
+    setAuthorFilter(values.author);
+    setCategoryFilter(values.category);
+    setCollectionFilter(values.collection);
+    setSortBy(values.sortBy);
+  }
 
   function isInLibrary(book: CatalogBook) {
     return entries.some(
@@ -250,18 +386,15 @@ export default function BookLibrary({
   }
 
   function announceError(reason: unknown) {
-    setError(reason instanceof Error ? reason.message : t("genericError"));
-    setMessage("");
+    toast.error(reason instanceof Error ? reason.message : t("genericError"));
   }
 
   async function addBook(book: CatalogBook): Promise<boolean> {
     if (isInLibrary(book)) {
-      setError(t("inLibrary"));
+      toast.info(t("inLibrary"));
       return false;
     }
     setBusy(true);
-    setError("");
-    setMessage("");
     try {
       await responseJson(
         await fetch("/api/library", {
@@ -278,7 +411,7 @@ export default function BookLibrary({
         await fetch("/api/library"),
       );
       setEntries(data.entries);
-      setMessage(t("bookAdded"));
+      toast.success(t("bookAdded"));
       return true;
     } catch (reason) {
       announceError(reason);
@@ -311,8 +444,6 @@ export default function BookLibrary({
 
   async function saveEntry(entry: BookEntryData) {
     setBusyId(entry.id);
-    setError("");
-    setMessage("");
     try {
       await responseJson(
         await fetch(`/api/library/${entry.id}`, {
@@ -332,7 +463,7 @@ export default function BookLibrary({
         await fetch("/api/library"),
       );
       setEntries(data.entries);
-      setMessage(t("changesSaved"));
+      toast.success(t("changesSaved"));
     } catch (reason) {
       announceError(reason);
     } finally {
@@ -342,14 +473,12 @@ export default function BookLibrary({
 
   async function removeEntry(entry: BookEntryData) {
     setBusyId(entry.id);
-    setError("");
-    setMessage("");
     try {
       await responseJson(
         await fetch(`/api/library/${entry.id}`, { method: "DELETE" }),
       );
       setEntries((previous) => previous.filter((item) => item.id !== entry.id));
-      setMessage(t("bookRemoved"));
+      toast.success(t("bookRemoved"));
     } catch (reason) {
       announceError(reason);
     } finally {
@@ -365,13 +494,11 @@ export default function BookLibrary({
   }
 
   async function startScanner() {
-    setError("");
-    setMessage("");
     const detectorClass = (
       window as Window & { BarcodeDetector?: BarcodeDetectorConstructor }
     ).BarcodeDetector;
     if (!detectorClass || !navigator.mediaDevices?.getUserMedia) {
-      setError(t("scannerUnsupported"));
+      toast.error(t("scannerUnsupported"));
       return;
     }
 
@@ -430,7 +557,7 @@ export default function BookLibrary({
 
   return (
     <main className={styles.main}>
-      {!libraryLoaded && !error && <RouteLoading />}
+      {!libraryLoaded && !libraryLoadFailed && <RouteLoading />}
       <section className={styles.hero}>
         <span className={styles.heroIcon}>
           <BookOpen aria-hidden="true" />
@@ -441,9 +568,6 @@ export default function BookLibrary({
           </h1>
         </div>
       </section>
-
-      <FeedbackMessage tone="error">{error}</FeedbackMessage>
-      <FeedbackMessage>{message}</FeedbackMessage>
 
       {isSearch && (
         <section className={styles.panel} aria-labelledby="catalog-heading">
@@ -626,142 +750,71 @@ export default function BookLibrary({
                 }}
               />
             </div>
-            <TextInput
-              label={t("searchLibrary")}
-              fieldClassName={styles.field}
-              type="search"
-              value={libraryQuery}
-              placeholder={t("librarySearchPlaceholder")}
-              onChange={(event) => setLibraryQuery(event.target.value)}
-            />
-            <Dropdown
-              label={t("status")}
-              fieldClassName={styles.field}
-              value={shelfFilter}
-              onValueChange={(value) => {
-                if (value === "all") setShelfFilter("all");
-                else {
-                  const shelf = shelves.find((shelf) => shelf === value);
-                  if (shelf) setShelfFilter(shelf);
+            <div className={styles.libraryLayout}>
+              <LibraryFiltersSidebar
+                values={filterValues}
+                defaults={filterDefaults}
+                sections={filterSections}
+                onChange={(key, value) =>
+                  applyFilters({ ...filterValues, [key]: value })
                 }
-              }}
-              options={[
-                { value: "all", label: `${t("allBooks")} (${entries.length})` },
-                ...shelves.map((shelf) => ({
-                  value: shelf,
-                  label: `${shelfNames[shelf]} (${entries.filter((entry) => entry.status === shelf).length})`,
-                })),
-              ]}
-            />
-            <div className={styles.toolbar}>
-              <Dropdown
-                label={t("filterAuthor")}
-                fieldClassName={styles.field}
-                value={authorFilter}
-                onValueChange={setAuthorFilter}
-                options={[
-                  { value: "", label: t("allAuthors") },
-                  ...authors.map((author) => ({
-                    value: author,
-                    label: author,
-                  })),
-                ]}
+                onClear={() => applyFilters(filterDefaults)}
               />
-              <Dropdown
-                label={t("filterCategory")}
-                fieldClassName={styles.field}
-                value={categoryFilter}
-                onValueChange={setCategoryFilter}
-                options={[
-                  { value: "", label: t("allCategories") },
-                  ...categories.map((category) => ({
-                    value: category,
-                    label: category,
-                  })),
-                ]}
-              />
-              <Dropdown
-                label={t("filterCollection")}
-                fieldClassName={styles.field}
-                value={collectionFilter}
-                onValueChange={setCollectionFilter}
-                options={[
-                  { value: "", label: t("allCollections") },
-                  ...collections.map((collection) => ({
-                    value: collection.id,
-                    label: collection.name,
-                  })),
-                ]}
-              />
-              <Dropdown
-                label={t("sortBy")}
-                fieldClassName={styles.field}
-                value={sortBy}
-                onValueChange={setSortBy}
-                options={[
-                  { value: "title", label: t("sortTitle") },
-                  { value: "author", label: t("sortAuthor") },
-                  { value: "category", label: t("sortCategory") },
-                  { value: "rating", label: t("sortRating") },
-                  { value: "date-added", label: t("sortDateAdded") },
-                  { value: "date-finished", label: t("sortDateFinished") },
-                  { value: "page-count", label: t("sortPageCount") },
-                ]}
-              />
-            </div>
-            {hasFilters && (
-              <Button
-                variant="secondary"
-                className={styles.resetButton}
-                onClick={() => {
-                  setLibraryQuery("");
-                  setShelfFilter("all");
-                  setCollectionFilter("");
-                  setAuthorFilter("");
-                  setCategoryFilter("");
-                }}
-              >
-                <RotateCcw aria-hidden="true" />
-                {t("clearFilters")}
-              </Button>
-            )}
-            {!libraryLoaded ? (
-              <p role="status">
-                {error ? t("loadError") : t("loadingLibrary")}
-              </p>
-            ) : entries.length ? (
-              <div className={styles.entries}>
-                {visibleEntries.map((entry) => (
-                  <BookEntry
-                    key={entry.id}
-                    entry={entry}
-                    collections={collections}
-                    shelfNames={shelfNames}
-                    labels={entryLabels}
-                    onChange={(id, changes) =>
-                      setEntries((previous) =>
-                        previous.map((item) =>
-                          item.id === id ? { ...item, ...changes } : item,
-                        ),
-                      )
-                    }
-                    onSave={(changed) => void saveEntry(changed)}
-                    onRemove={(removed) => void removeEntry(removed)}
-                    busy={busyId === entry.id}
-                  />
-                ))}
+              <div className={styles.libraryContent}>
+                <TextInput
+                  label={t("searchLibrary")}
+                  fieldClassName={styles.field}
+                  type="search"
+                  value={libraryQuery}
+                  placeholder={t("librarySearchPlaceholder")}
+                  onChange={(event) => setLibraryQuery(event.target.value)}
+                />
+                <LibraryFiltersDrawer
+                  disabled={!libraryLoaded}
+                  values={filterValues}
+                  defaults={filterDefaults}
+                  sections={filterSections}
+                  onApply={applyFilters}
+                />
+                {!libraryLoaded ? (
+                  !libraryLoadFailed && (
+                    <p role="status">{t("loadingLibrary")}</p>
+                  )
+                ) : entries.length ? (
+                  <div className={styles.entries}>
+                    {visibleEntries.map((entry) => (
+                      <BookEntry
+                        key={entry.id}
+                        entry={entry}
+                        collections={collections}
+                        shelfNames={shelfNames}
+                        labels={entryLabels}
+                        onChange={(id, changes) =>
+                          setEntries((previous) =>
+                            previous.map((item) =>
+                              item.id === id ? { ...item, ...changes } : item,
+                            ),
+                          )
+                        }
+                        onSave={(changed) => void saveEntry(changed)}
+                        onRemove={(removed) => void removeEntry(removed)}
+                        busy={busyId === entry.id}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState icon={<BookOpen aria-hidden="true" />}>
+                    {t("emptyLibrary")}
+                    <Link href="/search">{t("addBooks")}</Link>
+                  </EmptyState>
+                )}
+                {!!entries.length && !visibleEntries.length && (
+                  <EmptyState icon={<Search aria-hidden="true" />}>
+                    {t("noBooksMatch")}
+                  </EmptyState>
+                )}
               </div>
-            ) : (
-              <EmptyState icon={<BookOpen aria-hidden="true" />}>
-                {t("emptyLibrary")}
-                <Link href="/search">{t("addBooks")}</Link>
-              </EmptyState>
-            )}
-            {!!entries.length && !visibleEntries.length && (
-              <EmptyState icon={<Search aria-hidden="true" />}>
-                {t("noBooksMatch")}
-              </EmptyState>
-            )}
+            </div>
           </section>
         </>
       )}

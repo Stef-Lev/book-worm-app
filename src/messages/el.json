@@ -1,4 +1,8 @@
 {
+  "notifications": {
+    "label": "Ειδοποιήσεις",
+    "dismiss": "Κλείσιμο ειδοποίησης"
+  },
   "nav": {
     "menu": "Μενού",
     "closeMenu": "Κλείσιμο μενού",
@@ -121,6 +125,9 @@
     "filterCategory": "Φιλτράρισμα κατηγορίας",
     "allCategories": "Όλες οι κατηγορίες",
     "clearFilters": "Καθαρισμός φίλτρων",
+    "filter": "Φίλτρα",
+    "apply": "Εφαρμογή",
+    "reset": "Επαναφορά",
     "loadingLibrary": "Φόρτωση βιβλιοθήκης...",
     "inLibrary": "Στη βιβλιοθήκη σου",
     "search": "Αναζήτηση",
@@ -168,11 +175,9 @@
     "sortBy": "Ταξινόμηση",
     "sortTitle": "Τίτλος",
     "sortAuthor": "Συγγραφέας",
-    "sortCategory": "Κατηγορία",
     "sortRating": "Αξιολόγηση",
+    "sortPageCount": "Σελίδες",
     "sortDateAdded": "Ημερομηνία προσθήκης",
-    "sortDateFinished": "Ημερομηνία ολοκλήρωσης",
-    "sortPageCount": "Αριθμός σελίδων",
     "rating": "Αξιολόγηση",
     "noRating": "Χωρίς αξιολόγηση",
     "review": "Κριτική",

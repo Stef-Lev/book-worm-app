@@ -7,6 +7,7 @@ import { Menu, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import IconButton from "@/components/icon-button/icon-button";
 import Link from "@/components/navigation-link/navigation-link";
+import { getNotificationRegion } from "@/lib/notifications";
 import type { MobileNavigationProps } from "./mobile-navigation.types";
 import styles from "./mobile-navigation.module.css";
 
@@ -30,6 +31,7 @@ export default function MobileNavigation({
 
   return (
     <Dialog.Root
+      persistentElements={[getNotificationRegion]}
       open={open}
       onOpenChange={({ open: nextOpen }) => setOpen(nextOpen)}
       lazyMount

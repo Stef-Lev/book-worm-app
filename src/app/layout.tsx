@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { NextIntlClientProvider } from "next-intl";
 import { Geist, Geist_Mono } from "next/font/google";
 import RouteLoading from "@/components/route-loading/route-loading";
+import ToastProvider from "@/components/toast-provider/toast-provider";
 import "@/styles/global.css";
 
 const geistSans = Geist({
@@ -25,13 +26,19 @@ const preferencesScript = `(function(){try{var c=document.cookie,t=c.match(/(?:^
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: preferencesScript }} />
       </head>
       <body>
         <Suspense fallback={<RouteLoading />}>
-          <NextIntlClientProvider>{children}</NextIntlClientProvider>
+          <NextIntlClientProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </NextIntlClientProvider>
         </Suspense>
       </body>
     </html>

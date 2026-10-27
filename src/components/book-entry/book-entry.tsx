@@ -10,6 +10,7 @@ import BookCover from "@/components/book-cover/book-cover";
 import DateInput from "@/components/date-input/date-input";
 import Textarea from "@/components/textarea/textarea";
 import StarRating from "@/components/star-rating/star-rating";
+import { getNotificationRegion } from "@/lib/notifications";
 import type { BookEntryProps, Shelf } from "./book-entry.types";
 
 const shelves: Shelf[] = [
@@ -126,6 +127,7 @@ export default function BookEntry({
           {labels.save}
         </Button>
         <Dialog.Root
+          persistentElements={[getNotificationRegion]}
           role="alertdialog"
           lazyMount
           unmountOnExit

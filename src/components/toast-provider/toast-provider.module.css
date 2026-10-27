@@ -1,0 +1,47 @@
+.container {
+  --toastify-font-family: inherit;
+  --toastify-color-light: var(--color-surface);
+  --toastify-text-color-light: var(--color-text);
+  --toastify-color-success: var(--color-success);
+  --toastify-color-error: var(--color-danger);
+  --toastify-color-info: var(--color-primary);
+  --toastify-color-progress-light: var(--color-primary);
+  font-family: inherit;
+}
+
+.container .toast {
+  pointer-events: auto;
+  gap: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  overflow-wrap: anywhere;
+}
+
+.close {
+  display: grid;
+  place-items: center;
+  align-self: start;
+  flex-shrink: 0;
+  inline-size: var(--space-8);
+  block-size: var(--space-8);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-muted);
+}
+
+.close > svg {
+  inline-size: var(--space-4);
+  block-size: var(--space-4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .container .toast {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
+}

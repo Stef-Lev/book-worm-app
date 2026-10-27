@@ -5,10 +5,11 @@ import { Dialog } from "@ark-ui/react/dialog";
 import { Portal } from "@ark-ui/react/portal";
 import { FolderCog, Plus, Save, Trash2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { toast } from "react-toastify";
+import { getNotificationRegion } from "@/lib/notifications";
 import Button from "@/components/button/button";
 import IconButton from "@/components/icon-button/icon-button";
 import TextInput from "@/components/text-input/text-input";
-import FeedbackMessage from "@/components/feedback-message/feedback-message";
 import type { BookCollection } from "@/components/book-entry/book-entry.types";
 import type { CollectionsDialogProps } from "./collections-dialog.types";
 import styles from "./collections-dialog.module.css";
@@ -21,8 +22,6 @@ export default function CollectionsDialog({
 }: CollectionsDialogProps) {
   const t = useTranslations("libraryWorkspace");
   const [busyId, setBusyId] = useState("");
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
   const [pendingDelete, setPendingDelete] = useState<BookCollection | null>(
     null,
   );
@@ -36,8 +35,6 @@ export default function CollectionsDialog({
     const name = String(new FormData(form).get("name") ?? "").trim();
     if (!name) return;
     setBusyId(collection?.id ?? "create");
-    setError("");
-    setMessage("");
     try {
       const response = await fetch(
         collection ? `/api/collections/${collection.id}` : "/api/collections",
@@ -61,9 +58,11 @@ export default function CollectionsDialog({
         next.sort((first, second) => first.name.localeCompare(second.name)),
       );
       if (!collection) form.reset();
-      setMessage(collection ? t("collectionRenamed") : t("collectionCreated"));
+      toast.success(
+        collection ? t("collectionRenamed") : t("collectionCreated"),
+      );
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : t("genericError"));
+      toast.error(reason instanceof Error ? reason.message : t("genericError"));
     } finally {
       setBusyId("");
     }
@@ -71,8 +70,6 @@ export default function CollectionsDialog({
 
   async function deleteCollection(collection: BookCollection) {
     setBusyId(collection.id);
-    setError("");
-    setMessage("");
     try {
       const response = await fetch(`/api/collections/${collection.id}`, {
         method: "DELETE",
@@ -82,9 +79,9 @@ export default function CollectionsDialog({
       onChange(collections.filter((item) => item.id !== collection.id));
       onDeleted(collection.id);
       setPendingDelete(null);
-      setMessage(t("collectionDeleted"));
+      toast.success(t("collectionDeleted"));
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : t("genericError"));
+      toast.error(reason instanceof Error ? reason.message : t("genericError"));
     } finally {
       setBusyId("");
     }
@@ -92,14 +89,13 @@ export default function CollectionsDialog({
 
   return (
     <Dialog.Root
+      persistentElements={[getNotificationRegion]}
       lazyMount
       unmountOnExit
       closeOnEscape={!busyId}
       closeOnInteractOutside={!busyId}
       onOpenChange={({ open }) => {
         if (open) {
-          setError("");
-          setMessage("");
           setPendingDelete(null);
         }
       }}
@@ -124,8 +120,6 @@ export default function CollectionsDialog({
                 </IconButton>
               </Dialog.CloseTrigger>
             </div>
-            <FeedbackMessage tone="error">{error}</FeedbackMessage>
-            <FeedbackMessage>{message}</FeedbackMessage>
             <form
               className={styles.createForm}
               onSubmit={(event) => void saveCollection(event)}

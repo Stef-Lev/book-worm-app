@@ -1,4 +1,8 @@
 {
+  "notifications": {
+    "label": "Notifications",
+    "dismiss": "Dismiss notification"
+  },
   "nav": {
     "menu": "Menu",
     "closeMenu": "Close menu",
@@ -121,6 +125,9 @@
     "filterCategory": "Filter by category",
     "allCategories": "All categories",
     "clearFilters": "Clear filters",
+    "filter": "Filter",
+    "apply": "Apply",
+    "reset": "Reset",
     "loadingLibrary": "Loading your library...",
     "inLibrary": "In your library",
     "search": "Search",
@@ -168,11 +175,9 @@
     "sortBy": "Sort by",
     "sortTitle": "Title",
     "sortAuthor": "Author",
-    "sortCategory": "Category",
     "sortRating": "Rating",
+    "sortPageCount": "Pages",
     "sortDateAdded": "Date added",
-    "sortDateFinished": "Date finished",
-    "sortPageCount": "Page count",
     "rating": "Rating",
     "noRating": "Not rated",
     "review": "Review",

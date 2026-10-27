@@ -20,7 +20,8 @@
     "next-intl": "^4.14.9",
     "react": "19.3.0",
     "react-circle-flags": "^0.0.30",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "react-toastify": "^11.1.0"
   },
   "devDependencies": {
     "@csstools/postcss-global-data": "^4.0.0",
