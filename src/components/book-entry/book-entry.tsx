@@ -34,8 +34,24 @@ export default function BookEntry({
     entry.collectionIds.includes(collection.id),
   );
 
+  const showStarted =
+    entry.status === "currently-reading" || entry.status === "read";
+  const showFinished = entry.status === "read";
+  const showFeedback =
+    entry.status === "read" || entry.status === "did-not-finish";
+
   function update(changes: Partial<BookEntryProps["entry"]>) {
     onChange(entry.id, changes);
+  }
+
+  function changeStatus(status: Shelf) {
+    const today = new Date().toISOString().slice(0, 10);
+    update({
+      status,
+      ...(status === "currently-reading" &&
+        !entry.startedAt && { startedAt: today }),
+      ...(status === "read" && !entry.finishedAt && { finishedAt: today }),
+    });
   }
 
   return (
@@ -65,7 +81,10 @@ export default function BookEntry({
           fieldClassName={styles.field}
           value={entry.status}
           disabled={busy}
-          onValueChange={(value) => update({ status: value as Shelf })}
+          onValueChange={(value) => {
+            const status = shelves.find((shelf) => shelf === value);
+            if (status) changeStatus(status);
+          }}
           options={shelves.map((shelf) => ({
             value: shelf,
             label: shelfNames[shelf],
@@ -88,38 +107,48 @@ export default function BookEntry({
             })),
           ]}
         />
-        <div className={styles.dates}>
-          <DateInput
-            label={labels.startedAt}
-            fieldClassName={styles.field}
-            value={entry.startedAt}
-            onValueChange={(value) => update({ startedAt: value })}
-          />
-          <DateInput
-            label={labels.finishedAt}
-            fieldClassName={styles.field}
-            value={entry.finishedAt}
-            onValueChange={(value) => update({ finishedAt: value })}
-          />
-        </div>
-        <div className={styles.rating}>
-          <StarRating
-            label={labels.rating}
-            value={entry.rating}
-            onValueChange={(rating) => update({ rating })}
-            disabled={busy}
-          />
-        </div>
-        <div className={styles.review}>
-          <Textarea
-            label={labels.review}
-            fieldClassName={styles.field}
-            className={styles.textarea}
-            value={entry.review}
-            maxLength={5000}
-            onChange={(event) => update({ review: event.target.value })}
-          />
-        </div>
+        {(showStarted || showFinished) && (
+          <div className={styles.dates}>
+            {showStarted && (
+              <DateInput
+                label={labels.startedAt}
+                fieldClassName={styles.field}
+                value={entry.startedAt}
+                onValueChange={(value) => update({ startedAt: value })}
+              />
+            )}
+            {showFinished && (
+              <DateInput
+                label={labels.finishedAt}
+                fieldClassName={styles.field}
+                value={entry.finishedAt}
+                onValueChange={(value) => update({ finishedAt: value })}
+              />
+            )}
+          </div>
+        )}
+        {showFeedback && (
+          <>
+            <div className={styles.rating}>
+              <StarRating
+                label={labels.rating}
+                value={entry.rating}
+                onValueChange={(rating) => update({ rating })}
+                disabled={busy}
+              />
+            </div>
+            <div className={styles.review}>
+              <Textarea
+                label={labels.review}
+                fieldClassName={styles.field}
+                className={styles.textarea}
+                value={entry.review}
+                maxLength={5000}
+                onChange={(event) => update({ review: event.target.value })}
+              />
+            </div>
+          </>
+        )}
       </div>
       <div className={styles.actions}>
         <Button loading={busy} onClick={() => onSave(entry)}>
