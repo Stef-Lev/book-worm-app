@@ -27,6 +27,8 @@ export default function YearFilter({ year, years }: YearFilterProps) {
         id="analytics-year"
         name="year"
         label={t("showStatsFor")}
+        fieldClassName={styles.field}
+        size="sm"
         value={String(year)}
         onValueChange={changeYear}
         disabled={isPending}

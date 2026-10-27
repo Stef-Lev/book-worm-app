@@ -283,7 +283,6 @@ export default async function AnalyticsPage({
           )}
         </section>
       </div>
-      <p className={styles.footerNote}>{t("savedDataNote")}</p>
     </main>
   );
 }

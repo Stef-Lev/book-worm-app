@@ -53,6 +53,20 @@
     }
   },
   "pages": {
+    "notFound": {
+      "title": "Page not found",
+      "description": "This chapter is missing. The page you're looking for couldn't be found.",
+      "backHome": "Back to home",
+      "searchBooks": "Search books",
+      "note": "The page may have moved, or the link may be incorrect."
+    },
+    "unauthorized": {
+      "title": "Log in required",
+      "description": "Log in to access your library and continue your reading journey.",
+      "login": "Log in",
+      "backHome": "Back to home",
+      "note": "If your session has expired, log in again to continue."
+    },
     "home": {
       "title": "A little space for your next chapter.",
       "description": "Make yourself at home. Organize your shelves, discover a new read, and keep your favorite stories close."
@@ -89,7 +103,6 @@
       "noRatedBooks": "Add a rating to a book to see your favorites here.",
       "unknownAuthor": "Author not listed",
       "ratingOutOfFive": "{rating} out of 5",
-      "savedDataNote": "Insights are based on your saved library entries. Completion dates use UTC calendar months.",
       "shelves": {
         "to-read": "To Read",
         "currently-reading": "Currently Reading",

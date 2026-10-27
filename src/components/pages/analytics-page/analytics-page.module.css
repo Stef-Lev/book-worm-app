@@ -24,8 +24,7 @@
 
 .description,
 .panelHeading p,
-.metricContext,
-.footerNote {
+.metricContext {
   margin-block: var(--space-2) 0;
   color: var(--color-muted);
   font-size: var(--font-size-sm);
@@ -183,10 +182,6 @@
   margin-block-start: var(--space-1);
   color: var(--color-muted);
   font-size: var(--font-size-sm);
-}
-
-.footerNote {
-  margin: 0;
 }
 
 @media (--md) {
