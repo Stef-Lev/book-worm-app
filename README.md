@@ -72,7 +72,7 @@ describe pages in completed books, not measured pages read during a month.
 
 - Next.js App Router and React with TypeScript
 - MongoDB with Mongoose
-- Auth.js credentials and Google authentication, JWT sessions, and bcrypt password hashing
+- Auth.js credentials authentication, JWT sessions, and bcrypt password hashing
 - next-intl for localization
 - Ark UI for calendars, dialogs, and ratings; Radix UI for dropdowns
 - CSS Modules, shared design tokens, and PostCSS custom-media breakpoints
@@ -104,19 +104,6 @@ Generate an authentication secret, for example:
 ```bash
 openssl rand -base64 32
 ```
-
-To enable "Continue with Google", create an OAuth client ID (type "Web
-application") in the Google Cloud Console, add
-`http://localhost:3000/api/auth/callback/google` (and your production URL's
-equivalent) as an authorized redirect URI, and set:
-
-```dotenv
-AUTH_GOOGLE_ID=<client-id>
-AUTH_GOOGLE_SECRET=<client-secret>
-```
-
-The Google button is hidden when these are not set. Signing in with Google links
-to an existing account with the same verified email, or creates a new one.
 
 Keep real secrets and database credentials out of version control.
 

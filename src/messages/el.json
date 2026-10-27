@@ -45,14 +45,11 @@
     "registerSubmit": "Εγγραφή",
     "noAccount": "Δεν έχεις λογαριασμό;",
     "haveAccount": "Έχεις ήδη λογαριασμό;",
-    "continueWithGoogle": "Συνέχεια με Google",
-    "or": "ή",
     "errors": {
       "invalidCredentials": "Λάθος email ή κωδικός.",
       "invalidInput": "Απαιτούνται όνομα, έγκυρο email και κωδικός τουλάχιστον 8 χαρακτήρων.",
       "emailTaken": "Το email είναι ήδη καταχωρημένο.",
-      "generic": "Κάτι πήγε στραβά. Δοκίμασε ξανά.",
-      "google": "Η σύνδεση με Google απέτυχε. Δοκίμασε ξανά."
+      "generic": "Κάτι πήγε στραβά. Δοκίμασε ξανά."
     }
   },
   "pages": {

@@ -45,14 +45,11 @@
     "registerSubmit": "Register",
     "noAccount": "Don't have an account?",
     "haveAccount": "Already have an account?",
-    "continueWithGoogle": "Continue with Google",
-    "or": "or",
     "errors": {
       "invalidCredentials": "Invalid email or password.",
       "invalidInput": "Name, a valid email and a password of 8+ characters are required.",
       "emailTaken": "Email already registered.",
-      "generic": "Something went wrong. Please try again.",
-      "google": "Google sign-in failed. Please try again."
+      "generic": "Something went wrong. Please try again."
     }
   },
   "pages": {
