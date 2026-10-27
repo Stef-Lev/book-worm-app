@@ -1,6 +1,8 @@
 import Link from "@/components/navigation-link/navigation-link";
 import { getTranslations } from "next-intl/server";
 import AuthPageShell from "@/components/auth-page-shell/auth-page-shell";
+import GoogleSignIn from "@/components/google-sign-in/google-sign-in";
+import { isGoogleAuthEnabled } from "@/lib/google-auth";
 import RegisterForm from "@/components/pages/register-page/register-form/register-form";
 
 export default async function RegisterPage() {
@@ -17,6 +19,7 @@ export default async function RegisterPage() {
         </>
       }
     >
+      {isGoogleAuthEnabled && <GoogleSignIn />}
       <RegisterForm />
     </AuthPageShell>
   );
