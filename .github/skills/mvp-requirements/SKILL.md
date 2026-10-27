@@ -1,11 +1,11 @@
 ---
 name: mvp-requirements
-description: Product context and MVP requirements for the Bookworm book-tracking app (virtual library, shelves, search/barcode add, progress, calendar, ratings, statistics). Use when planning, building or prioritising any Bookworm feature, data model, API or page.
+description: Product context and MVP requirements for the PaperSmell book-tracking app (virtual library, shelves, search/barcode add, progress, calendar, ratings, statistics). Use when planning, building or prioritising any PaperSmell feature, data model, API or page.
 ---
 
-# Bookworm MVP requirements
+# PaperSmell MVP requirements
 
-Bookworm is a book tracking app. **Phase: MVP, functionality over styling** (see `create-component` skill). Stack: Next.js (App Router, TypeScript), React, CSS Modules, MongoDB (Mongoose), Auth.js credentials auth, fully responsive. Each user only sees their own data.
+PaperSmell is a book tracking app. **Phase: MVP, functionality over styling** (see `create-component` skill). Stack: Next.js (App Router, TypeScript), React, CSS Modules, MongoDB (Mongoose), Auth.js credentials auth, fully responsive. Each user only sees their own data.
 
 Already done: project setup, auth foundation (`User` model, `/api/register`, Auth.js), style tokens. Pending: login/register pages, everything below.
 

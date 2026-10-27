@@ -103,11 +103,11 @@
     },
     "login": {
       "title": "Σύνδεση",
-      "description": "Καλώς ήρθες ξανά στο Bookworm."
+      "description": "Καλώς ήρθες ξανά στο PaperSmell."
     },
     "register": {
       "title": "Δημιουργία λογαριασμού",
-      "description": "Γίνε μέλος του Bookworm και παρακολούθησε την ανάγνωσή σου."
+      "description": "Γίνε μέλος του PaperSmell και παρακολούθησε την ανάγνωσή σου."
     }
   },
   "libraryWorkspace": {

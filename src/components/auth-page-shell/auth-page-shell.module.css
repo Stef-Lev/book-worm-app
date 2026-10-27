@@ -23,14 +23,10 @@
   font-weight: var(--font-weight-bold);
 }
 
-.brand svg {
-  box-sizing: content-box;
-  inline-size: var(--space-6);
-  block-size: var(--space-6);
-  padding: var(--space-2);
-  border-radius: var(--radius-xl);
-  background: var(--color-secondary);
-  color: var(--color-secondary-contrast);
+.brandMark {
+  inline-size: var(--space-10);
+  block-size: var(--space-10);
+  flex-shrink: 0;
 }
 
 .heading {

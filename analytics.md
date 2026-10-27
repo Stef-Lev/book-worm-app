@@ -1,4 +1,4 @@
-# Bookworm Analytics Ideas
+# PaperSmell Analytics Ideas
 
 Ideas grounded in the current Mongoose models, not an implementation specification.
 
@@ -16,7 +16,7 @@ Prefer plain labels such as "Books finished" and "Your favorite books". Avoid sc
 
 ## Recommended Libraries
 
-**Recommendation: Recharts for the few charts we actually need.** It offers React components for bar charts, responsive containers, axes, and tooltips, and can be styled to match Bookworm's CSS variables. Start with one monthly bar chart rather than introducing a large dashboard framework.
+**Recommendation: Recharts for the few charts we actually need.** It offers React components for bar charts, responsive containers, axes, and tooltips, and can be styled to match PaperSmell's CSS variables. Start with one monthly bar chart rather than introducing a large dashboard framework.
 
 | Need                                  | Suggested Tool                                                       | Reason                                                            |
 | ------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------- |

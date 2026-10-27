@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Bookworm",
+  title: "PaperSmell",
   description: "Track your reading.",
 };
 

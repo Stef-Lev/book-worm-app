@@ -1,4 +1,4 @@
-# Bookworm
+# PaperSmell
 
 A personal book-tracking app for organizing your library, recording reading dates
 and reviews, and seeing simple reading insights. The interface supports English
@@ -95,7 +95,7 @@ npm ci
 Create `.env.local` using [`.env.example`](./.env.example) as a template:
 
 ```dotenv
-MONGODB_URI=mongodb://127.0.0.1:27017/bookworm
+MONGODB_URI=mongodb://127.0.0.1:27017/papersmell
 AUTH_SECRET=<a-long-random-secret>
 ```
 

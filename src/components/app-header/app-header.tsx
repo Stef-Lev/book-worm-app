@@ -17,15 +17,15 @@ export default async function AppHeader({ theme }: AppHeaderProps) {
 
   return (
     <header className={styles.header}>
-      <Link href="/" className={styles.logo} aria-label="Bookworm">
+      <Link href="/" className={styles.logo} aria-label="PaperSmell">
         <Image
-          src="/bookworm-logo.svg"
+          src="/papersmell-logo.svg"
           alt=""
           width={56}
           height={56}
           className={styles.logoMark}
         />
-        <span className={styles.logoText}>Bookworm</span>
+        <span className={styles.logoText}>PaperSmell</span>
       </Link>
       <nav className={styles.nav}>
         {links.map(({ href, label }) => (

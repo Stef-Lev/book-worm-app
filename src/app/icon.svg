@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="2 5 60 60" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+  <title>PaperSmell</title>
+  <g stroke="#619e9f">
+    <rect x="6" y="44" width="52" height="12" rx="2.5"/>
+    <path d="M13 44v12M51 48h-30M51 52h-30"/>
+  </g>
+  <g stroke="#ff9182">
+    <rect x="10" y="31" width="46" height="13" rx="2.5"/>
+    <path d="M49 31v13M14 35.5h28M14 39.5h28"/>
+  </g>
+  <g stroke="#619e9f" transform="rotate(-7 30 24)">
+    <rect x="8" y="18" width="44" height="12" rx="2.5"/>
+    <path d="M15 18v12M48 22h-27M48 26h-27"/>
+  </g>
+</svg>

@@ -52,7 +52,7 @@ async function searchOpenLibraryCached(params: string): Promise<CatalogBook[]> {
   const response = await fetch(
     `https://openlibrary.org/search.json?${params}`,
     {
-      headers: { "User-Agent": "Bookworm/1.0 (book catalog search)" },
+      headers: { "User-Agent": "PaperSmell/1.0 (book catalog search)" },
       signal: AbortSignal.timeout(8000),
     },
   );

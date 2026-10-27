@@ -103,11 +103,11 @@
     },
     "login": {
       "title": "Log in",
-      "description": "Welcome back to Bookworm."
+      "description": "Welcome back to PaperSmell."
     },
     "register": {
       "title": "Create account",
-      "description": "Join Bookworm and start tracking your reading."
+      "description": "Join PaperSmell and start tracking your reading."
     }
   },
   "libraryWorkspace": {

@@ -1,6 +1,6 @@
 ---
 name: create-component
-description: Create React components in the Bookworm app following project conventions (folder-per-component in kebab-case, <name>.types.ts, CSS Module, subcomponent subfolders, page content vs. shared components). Use when asked to create, add, scaffold or split a component or page content.
+description: Create React components in the PaperSmell app following project conventions (folder-per-component in kebab-case, <name>.types.ts, CSS Module, subcomponent subfolders, page content vs. shared components). Use when asked to create, add, scaffold or split a component or page content.
 ---
 
 # Create a component

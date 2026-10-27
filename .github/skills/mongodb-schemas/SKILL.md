@@ -1,9 +1,9 @@
 ---
 name: mongodb-schemas
-description: Reference MongoDB/Mongoose schemas and data-modeling rules for Bookworm (User, global Book catalog, per-user UserBook tracker, indexes, query and aggregation examples). Use when creating or changing models in src/models, writing queries or API routes that touch the database, or computing statistics.
+description: Reference MongoDB/Mongoose schemas and data-modeling rules for PaperSmell (User, global Book catalog, per-user UserBook tracker, indexes, query and aggregation examples). Use when creating or changing models in src/models, writing queries or API routes that touch the database, or computing statistics.
 ---
 
-# Bookworm MongoDB data model
+# PaperSmell MongoDB data model
 
 Stack: Mongoose + TypeScript. Models live in `src/models/<Name>.ts`, connection in `src/lib/mongodb.ts`. Follow the pattern of the existing `src/models/User.ts`.
 
