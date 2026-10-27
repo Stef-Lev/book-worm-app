@@ -9,7 +9,8 @@ import StarRating from "@/components/star-rating/star-rating";
 import YearFilter from "@/components/pages/analytics-page/year-filter/year-filter";
 import ReadingOverTime from "@/components/pages/analytics-page/reading-over-time/reading-over-time";
 import { connectDB } from "@/lib/mongodb";
-import UserBook, { SHELVES } from "@/models/UserBook";
+import { SHELVES, Shelf } from "@/lib/shelves";
+import UserBook from "@/models/UserBook";
 import styles from "./analytics-page.module.css";
 import type { AnalyticsPageProps } from "./analytics-page.types";
 
@@ -23,7 +24,9 @@ type BookDetails = {
 type YearFilter = number | "all";
 
 function validDate(value: Date | null | undefined): Date | null {
-  return value instanceof Date && Number.isFinite(value.getTime()) ? value : null;
+  return value instanceof Date && Number.isFinite(value.getTime())
+    ? value
+    : null;
 }
 
 function getYearFilter(
@@ -37,7 +40,9 @@ function getYearFilter(
   return year >= minYear && year <= currentYear ? year : currentYear;
 }
 
-export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps) {
+export default async function AnalyticsPage({
+  searchParams,
+}: AnalyticsPageProps) {
   // auth() and the date math below are request-time only; keep them out of prerender.
   await connection();
   const [{ year: yearParam }, session, t, locale] = await Promise.all([
@@ -50,7 +55,9 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
   if (!userId || !mongoose.Types.ObjectId.isValid(userId)) redirect("/login");
 
   await connectDB();
-  const entries = await UserBook.find({ userId: new mongoose.Types.ObjectId(userId) })
+  const entries = await UserBook.find({
+    userId: new mongoose.Types.ObjectId(userId),
+  })
     .populate<{ bookId: BookDetails | null }>({
       path: "bookId",
       select: "title authors pageCount coverUrl",
@@ -60,8 +67,8 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
 
   const now = new Date();
   const currentYear = now.getUTCFullYear();
-  const allFinished = entries.flatMap((entry) => {
-    if (entry.status !== "read") return [];
+  const readEntries = entries.filter((entry) => entry.status === Shelf.Read);
+  const allFinished = readEntries.flatMap((entry) => {
     const finishedAt = validDate(entry.finishedAt);
     const startedAt = validDate(entry.startedAt);
     if (
@@ -73,19 +80,11 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
     }
     return [{ entry, finishedAt }];
   });
-  const missingOrInconsistentDates = entries.filter((entry) => {
-    if (entry.status !== "read") return false;
-    const finishedAt = validDate(entry.finishedAt);
-    const startedAt = validDate(entry.startedAt);
-    return (
-      !finishedAt ||
-      finishedAt.getTime() > now.getTime() ||
-      Boolean(startedAt && finishedAt && startedAt.getTime() > finishedAt.getTime())
-    );
-  }).length;
+  const missingOrInconsistentDates = readEntries.length - allFinished.length;
 
   const minYear = allFinished.reduce(
-    (earliest, { finishedAt }) => Math.min(earliest, finishedAt.getUTCFullYear()),
+    (earliest, { finishedAt }) =>
+      Math.min(earliest, finishedAt.getUTCFullYear()),
     currentYear,
   );
   const year = getYearFilter(
@@ -96,7 +95,9 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
   const selectedCompletions =
     year === "all"
       ? allFinished
-      : allFinished.filter(({ finishedAt }) => finishedAt.getUTCFullYear() === year);
+      : allFinished.filter(
+          ({ finishedAt }) => finishedAt.getUTCFullYear() === year,
+        );
   const completedPages = selectedCompletions.reduce((sum, { entry }) => {
     const pageCount = entry.bookId?.pageCount ?? 0;
     return pageCount > 0 && Number.isFinite(pageCount) ? sum + pageCount : sum;
@@ -106,10 +107,7 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
     return !Number.isFinite(pageCount) || pageCount <= 0;
   }).length;
   const completionYear = year === "all" ? currentYear : year;
-  const startYear =
-    year === "all"
-      ? minYear
-      : completionYear;
+  const startYear = year === "all" ? minYear : completionYear;
   const completionCounts = new Map<string, number>();
   for (const { finishedAt } of selectedCompletions) {
     const key = `${finishedAt.getUTCFullYear()}-${finishedAt.getUTCMonth()}`;
@@ -123,7 +121,8 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
   ) {
     if (year !== "all" && date.getUTCFullYear() !== year) continue;
     const count =
-      completionCounts.get(`${date.getUTCFullYear()}-${date.getUTCMonth()}`) ?? 0;
+      completionCounts.get(`${date.getUTCFullYear()}-${date.getUTCMonth()}`) ??
+      0;
     months.push({
       year: date.getUTCFullYear(),
       label: new Intl.DateTimeFormat(locale, {
@@ -134,22 +133,16 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
     });
   }
 
-  const shelfCounts = entries.reduce(
-    (counts, entry) => {
-      counts[entry.status] += 1;
-      return counts;
-    },
-    {
-      "to-read": 0,
-      "currently-reading": 0,
-      read: 0,
-      "did-not-finish": 0,
-    },
-  );
+  const shelfCounts = Object.fromEntries(
+    SHELVES.map((shelf) => [
+      shelf,
+      entries.filter((entry) => entry.status === shelf).length,
+    ]),
+  ) as Record<Shelf, number>;
   const librarySize = entries.length;
   const readPercentage =
     librarySize > 0 ? Math.round((shelfCounts.read / librarySize) * 100) : 0;
-  const currentlyReading = shelfCounts["currently-reading"];
+  const currentlyReading = shelfCounts[Shelf.CurrentlyReading];
   const favorites = entries
     .flatMap((entry) => {
       const book = entry.bookId;
@@ -159,7 +152,9 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
     })
     .sort((a, b) => {
       const ratingDifference = b.rating - a.rating;
-      return ratingDifference || a.book.title.localeCompare(b.book.title, locale);
+      return (
+        ratingDifference || a.book.title.localeCompare(b.book.title, locale)
+      );
     })
     .slice(0, 5);
   const yearOptions = Array.from(
@@ -186,7 +181,9 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
         </article>
         <article className={styles.metric}>
           <p className={styles.metricLabel}>{t("pagesInFinishedBooks")}</p>
-          <p className={styles.metricValue}>{completedPages.toLocaleString(locale)}</p>
+          <p className={styles.metricValue}>
+            {completedPages.toLocaleString(locale)}
+          </p>
           <p className={styles.metricContext}>
             {t("knownPageCounts", { count: completedBooksMissingPages })}
           </p>
@@ -202,10 +199,7 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
 
       <div className={styles.sections}>
         <section className={styles.panel} aria-labelledby="reading-over-time">
-          <ReadingOverTime
-            months={months}
-            year={year}
-          />
+          <ReadingOverTime months={months} year={year} />
           <p className={styles.dataNote}>
             {t("invalidCompletionDates", { count: missingOrInconsistentDates })}
           </p>
@@ -242,7 +236,9 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
                 {SHELVES.map((shelf) => (
                   <li className={styles.shelfRow} key={shelf}>
                     <span>{t(`shelves.${shelf}`)}</span>
-                    <span className={styles.shelfCount}>{shelfCounts[shelf]}</span>
+                    <span className={styles.shelfCount}>
+                      {shelfCounts[shelf]}
+                    </span>
                   </li>
                 ))}
               </ul>

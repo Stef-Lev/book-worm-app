@@ -1,7 +1,8 @@
 import { cacheLife } from "next/cache";
+import { BookSource } from "@/lib/book-source";
 
 export type CatalogBook = {
-  source: "open-library";
+  source: BookSource.OpenLibrary;
   externalId: string;
   isbn?: string;
   title: string;
@@ -10,6 +11,12 @@ export type CatalogBook = {
   publishedDate?: string;
   categories: string[];
   coverUrl?: string;
+};
+
+/** A book about to be added to a library: a catalog result or a manual entry. */
+export type NewBook = Omit<CatalogBook, "source" | "externalId"> & {
+  source: BookSource.OpenLibrary | BookSource.Manual;
+  externalId?: string;
 };
 
 type OpenLibraryDoc = {
@@ -68,7 +75,7 @@ async function searchOpenLibraryCached(params: string): Promise<CatalogBook[]> {
     if (!doc.key || !doc.title) return [];
     return [
       {
-        source: "open-library" as const,
+        source: BookSource.OpenLibrary,
         externalId: doc.key,
         isbn: searchedIsbn ?? doc.isbn?.[0],
         title: doc.title,

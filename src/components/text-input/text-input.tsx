@@ -1,7 +1,7 @@
 "use client";
 
-import { useId } from "react";
 import FormField from "@/components/form-field/form-field";
+import { useFormField } from "@/components/form-field/use-form-field";
 import { cn } from "@/lib/cn";
 import styles from "./text-input.module.css";
 import type { TextInputProps } from "./text-input.types";
@@ -18,14 +18,17 @@ export default function TextInput({
   "aria-invalid": invalid,
   ...rest
 }: TextInputProps) {
-  const generatedId = useId();
-  const inputId = id ?? generatedId;
-  const messageId = `${inputId}-message`;
-  const message = error ?? hint;
+  const field = useFormField({
+    id,
+    hint,
+    error,
+    "aria-describedby": describedBy,
+    "aria-invalid": invalid,
+  });
 
   return (
     <FormField
-      id={inputId}
+      id={field.id}
       label={label}
       hint={hint}
       error={error}
@@ -33,14 +36,8 @@ export default function TextInput({
     >
       <input
         {...rest}
-        id={inputId}
+        {...field}
         type={type}
-        aria-invalid={error ? true : invalid}
-        aria-describedby={
-          [describedBy, message ? messageId : undefined]
-            .filter(Boolean)
-            .join(" ") || undefined
-        }
         className={cn(styles.input, error && styles.invalid, className)}
       />
     </FormField>

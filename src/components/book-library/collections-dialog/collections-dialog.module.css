@@ -1,21 +1,3 @@
-.backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  background: color-mix(in srgb, var(--color-black) 45%, transparent);
-}
-
-.positioner {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  display: grid;
-  align-items: center;
-  justify-items: center;
-  padding: var(--space-4);
-  overflow-y: auto;
-}
-
 .dialog {
   display: flex;
   flex-direction: column;

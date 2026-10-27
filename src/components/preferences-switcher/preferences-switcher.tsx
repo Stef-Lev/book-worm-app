@@ -6,8 +6,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { Moon, Sun } from "lucide-react";
 import { CircleFlag } from "react-circle-flags";
 import IconButton from "@/components/icon-button/icon-button";
-import { LOCALE_COOKIE, LOCALE_LABELS } from "@/i18n/config";
-import { COOKIE_MAX_AGE, THEME_COOKIE } from "@/lib/preferences";
+import { LOCALE_COOKIE, LOCALE_LABELS, Locale } from "@/i18n/config";
+import { COOKIE_MAX_AGE, THEME_COOKIE, Theme } from "@/lib/preferences";
 import styles from "./preferences-switcher.module.css";
 import type { PreferencesSwitcherProps } from "./preferences-switcher.types";
 
@@ -43,9 +43,10 @@ export default function PreferencesSwitcher({
     getServerSystemDark,
   );
   const isDark =
-    currentTheme === "dark" || (currentTheme === "system" && systemDark);
-  const nextLocale = locale === "en" ? "el" : "en";
-  const nextTheme = isDark ? "light" : "dark";
+    currentTheme === Theme.Dark ||
+    (currentTheme === Theme.System && systemDark);
+  const nextLocale = locale === Locale.En ? Locale.El : Locale.En;
+  const nextTheme = isDark ? Theme.Light : Theme.Dark;
   const languageTitle = t("switchLanguage", {
     language: LOCALE_LABELS[nextLocale],
   });
@@ -72,7 +73,7 @@ export default function PreferencesSwitcher({
       >
         <CircleFlag
           className={styles.flag}
-          countryCode={locale === "el" ? "gr" : "gb"}
+          countryCode={locale === Locale.El ? "gr" : "gb"}
           width={24}
           height={24}
           alt=""

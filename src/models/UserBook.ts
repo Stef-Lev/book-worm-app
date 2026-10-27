@@ -1,29 +1,39 @@
 import mongoose, { InferSchemaType, Model } from "mongoose";
-
-export const SHELVES = ["to-read", "currently-reading", "read", "did-not-finish"] as const;
+import { SHELVES, Shelf } from "@/lib/shelves";
 
 const userBookSchema = new mongoose.Schema(
   {
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    bookId: { type: mongoose.Schema.Types.ObjectId, ref: "Book", required: true },
-    status: { type: String, enum: SHELVES, default: "to-read" },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    bookId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Book",
+      required: true,
+    },
+    status: { type: String, enum: SHELVES, default: Shelf.ToRead },
     startedAt: { type: Date, default: null },
     finishedAt: { type: Date, default: null },
-    collectionIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "Collection" }],
+    collectionIds: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "Collection" },
+    ],
     rating: {
       type: Number,
       default: null,
       min: 0.5,
       max: 5,
       validate: {
-        validator: (v: number | null) => v === null || v * 2 === Math.floor(v * 2),
+        validator: (v: number | null) =>
+          v === null || v * 2 === Math.floor(v * 2),
         message: "Rating must be in 0.5 steps",
       },
     },
     review: { type: String, trim: true },
     tags: [{ type: String, trim: true }],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 userBookSchema.index({ userId: 1, bookId: 1 }, { unique: true });

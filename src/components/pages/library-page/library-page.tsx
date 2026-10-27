@@ -1,5 +1,6 @@
 import BookLibrary from "@/components/book-library/book-library";
 import type { LibraryUrlFilters } from "@/components/book-library/book-library.types";
+import { LibraryMode } from "@/lib/library";
 import type { LibraryPageProps } from "./library-page.types";
 
 const filterKeys = [
@@ -19,5 +20,7 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
     const first = Array.isArray(value) ? value[0] : value;
     if (first) initialFilters[key] = first;
   }
-  return <BookLibrary mode="library" initialFilters={initialFilters} />;
+  return (
+    <BookLibrary mode={LibraryMode.Library} initialFilters={initialFilters} />
+  );
 }

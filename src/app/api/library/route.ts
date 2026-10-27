@@ -1,27 +1,28 @@
 import mongoose from "mongoose";
-import { auth } from "@/auth";
+import {
+  getSessionUserId,
+  isDuplicateKeyError,
+  isObjectIdList,
+  jsonError,
+  ownsCollections,
+  toCollectionJson,
+  unauthorized,
+} from "@/lib/api";
+import { toDateOnly } from "@/lib/dates";
 import { connectDB } from "@/lib/mongodb";
-import type { CatalogBook } from "@/lib/open-library";
+import type { NewBook } from "@/lib/open-library";
+import { Shelf, isShelf } from "@/lib/shelves";
+import { BookSource } from "@/lib/book-source";
 import Book from "@/models/Book";
 import Collection from "@/models/Collection";
-import { SHELVES } from "@/models/UserBook";
 import UserBook from "@/models/UserBook";
 
-function getUserId(value: string) {
-  return mongoose.Types.ObjectId.isValid(value)
-    ? new mongoose.Types.ObjectId(value)
-    : null;
-}
-
-function isShelf(value: unknown): value is (typeof SHELVES)[number] {
-  return typeof value === "string" && SHELVES.some((shelf) => shelf === value);
-}
-
-function isCatalogBook(value: unknown): value is CatalogBook {
+function isNewBook(value: unknown): value is NewBook {
   if (!value || typeof value !== "object") return false;
   const book = value as Record<string, unknown>;
   return (
-    (book.source === "open-library" || book.source === "manual") &&
+    (book.source === BookSource.OpenLibrary ||
+      book.source === BookSource.Manual) &&
     typeof book.title === "string" &&
     book.title.trim().length > 0 &&
     book.title.length <= 300 &&
@@ -63,13 +64,8 @@ function safeUrl(value: unknown) {
 }
 
 export async function GET() {
-  const session = await auth();
-  const userId = session?.user?.id ? getUserId(session.user.id) : null;
-  if (!userId)
-    return Response.json(
-      { error: "Authentication required." },
-      { status: 401 },
-    );
+  const userId = await getSessionUserId();
+  if (!userId) return unauthorized();
 
   await connectDB();
   const [entries, collections] = await Promise.all([
@@ -85,8 +81,8 @@ export async function GET() {
         status: entry.status,
         rating: entry.rating,
         review: entry.review ?? "",
-        startedAt: entry.startedAt?.toISOString().slice(0, 10) ?? "",
-        finishedAt: entry.finishedAt?.toISOString().slice(0, 10) ?? "",
+        startedAt: entry.startedAt ? toDateOnly(entry.startedAt) : "",
+        finishedAt: entry.finishedAt ? toDateOnly(entry.finishedAt) : "",
         collectionIds: entry.collectionIds.map((id) => id.toString()),
         createdAt: entry.createdAt.toISOString(),
         book: {
@@ -103,106 +99,64 @@ export async function GET() {
         },
       };
     }),
-    collections: collections.map((collection) => ({
-      id: collection._id.toString(),
-      name: collection.name,
-    })),
+    collections: collections.map(toCollectionJson),
   });
 }
 
 export async function POST(request: Request) {
-  const session = await auth();
-  const userId = session?.user?.id ? getUserId(session.user.id) : null;
-  if (!userId)
-    return Response.json(
-      { error: "Authentication required." },
-      { status: 401 },
-    );
+  const userId = await getSessionUserId();
+  if (!userId) return unauthorized();
 
   const body: unknown = await request.json();
   if (!body || typeof body !== "object") {
-    return Response.json({ error: "Invalid book details." }, { status: 400 });
+    return jsonError("Invalid book details.", 400);
   }
   const { book, status, collectionIds } = body as Record<string, unknown>;
-  if (!isCatalogBook(book)) {
-    return Response.json(
-      { error: "A valid book title is required." },
-      { status: 400 },
-    );
+  if (!isNewBook(book)) {
+    return jsonError("A valid book title is required.", 400);
   }
-  const selectedStatus = status === undefined ? "to-read" : status;
+  const selectedStatus = status === undefined ? Shelf.ToRead : status;
   if (!isShelf(selectedStatus)) {
-    return Response.json({ error: "Select a valid shelf." }, { status: 400 });
+    return jsonError("Select a valid shelf.", 400);
   }
-  if (
-    collectionIds !== undefined &&
-    (!Array.isArray(collectionIds) ||
-      collectionIds.length > 20 ||
-      !collectionIds.every(
-        (id) => typeof id === "string" && mongoose.Types.ObjectId.isValid(id),
-      ) ||
-      new Set(collectionIds).size !== collectionIds.length)
-  ) {
-    return Response.json(
-      { error: "Select valid collections." },
-      { status: 400 },
-    );
+  if (collectionIds !== undefined && !isObjectIdList(collectionIds)) {
+    return jsonError("Select valid collections.", 400);
   }
   if (book.coverUrl && !safeUrl(book.coverUrl)) {
-    return Response.json(
-      { error: "Enter a valid HTTP or HTTPS cover URL." },
-      { status: 400 },
-    );
+    return jsonError("Enter a valid HTTP or HTTPS cover URL.", 400);
   }
 
   await connectDB();
-  const ownedCollections = (collectionIds as string[] | undefined) ?? [];
-  if (
-    ownedCollections.length &&
-    (await Collection.countDocuments({
-      _id: { $in: ownedCollections },
-      userId,
-    })) !== new Set(ownedCollections).size
-  ) {
-    return Response.json(
-      { error: "One or more collections could not be found." },
-      { status: 400 },
-    );
+  const ownedCollections = collectionIds ?? [];
+  if (!(await ownsCollections(ownedCollections, userId))) {
+    return jsonError("One or more collections could not be found.", 400);
   }
 
+  // isNewBook has already validated these fields' types
+  const bookFields = {
+    isbn: book.isbn?.slice(0, 32),
+    title: book.title.trim(),
+    authors: book.authors ?? [],
+    pageCount: book.pageCount ?? 0,
+    publishedDate: book.publishedDate,
+    categories: book.categories ?? [],
+    coverUrl: safeUrl(book.coverUrl),
+  };
   let catalogBookId: mongoose.Types.ObjectId;
-  if (book.source === "open-library") {
+  if (book.source === BookSource.OpenLibrary) {
     if (typeof book.externalId !== "string" || book.externalId.length > 100) {
-      return Response.json(
-        { error: "The catalog result is invalid." },
-        { status: 400 },
-      );
+      return jsonError("The catalog result is invalid.", 400);
     }
     const filter = {
-      source: "open-library" as const,
+      source: BookSource.OpenLibrary,
       externalId: book.externalId,
     };
     let catalogBook = await Book.findOne(filter);
     if (!catalogBook) {
       try {
-        catalogBook = await Book.create({
-          source: "open-library",
-          externalId: book.externalId,
-          isbn: book.isbn?.slice(0, 32),
-          title: book.title.trim(),
-          authors: book.authors ?? [],
-          pageCount: book.pageCount ?? 0,
-          publishedDate: book.publishedDate,
-          categories: book.categories ?? [],
-          coverUrl: safeUrl(book.coverUrl),
-        });
+        catalogBook = await Book.create({ ...filter, ...bookFields });
       } catch (error) {
-        if (
-          !(error instanceof mongoose.mongo.MongoServerError) ||
-          error.code !== 11000
-        ) {
-          throw error;
-        }
+        if (!isDuplicateKeyError(error)) throw error;
         catalogBook = await Book.findOne(filter);
       }
     }
@@ -212,15 +166,9 @@ export async function POST(request: Request) {
     catalogBookId = catalogBook._id;
   } else {
     const catalogBook = await Book.create({
-      source: "manual",
+      source: BookSource.Manual,
       createdBy: userId,
-      isbn: typeof book.isbn === "string" ? book.isbn.slice(0, 32) : undefined,
-      title: book.title.trim(),
-      authors: book.authors ?? [],
-      pageCount: book.pageCount ?? 0,
-      publishedDate: book.publishedDate,
-      categories: book.categories ?? [],
-      coverUrl: safeUrl(book.coverUrl),
+      ...bookFields,
     });
     catalogBookId = catalogBook._id;
   }
@@ -230,20 +178,14 @@ export async function POST(request: Request) {
       userId,
       bookId: catalogBookId,
       status: selectedStatus,
-      startedAt: selectedStatus === "currently-reading" ? new Date() : null,
-      finishedAt: selectedStatus === "read" ? new Date() : null,
+      startedAt: selectedStatus === Shelf.CurrentlyReading ? new Date() : null,
+      finishedAt: selectedStatus === Shelf.Read ? new Date() : null,
       collectionIds: ownedCollections,
     });
     return Response.json({ id: entry._id.toString() }, { status: 201 });
   } catch (error) {
-    if (
-      error instanceof mongoose.mongo.MongoServerError &&
-      error.code === 11000
-    ) {
-      return Response.json(
-        { error: "This book is already in your library." },
-        { status: 409 },
-      );
+    if (isDuplicateKeyError(error)) {
+      return jsonError("This book is already in your library.", 409);
     }
     throw error;
   }

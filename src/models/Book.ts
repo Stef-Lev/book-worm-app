@@ -1,10 +1,9 @@
 import mongoose, { InferSchemaType, Model } from "mongoose";
-
-export const BOOK_SOURCES = ["google-books", "open-library", "manual"] as const;
+import { BookSource } from "@/lib/book-source";
 
 const bookSchema = new mongoose.Schema(
   {
-    source: { type: String, enum: BOOK_SOURCES, required: true },
+    source: { type: String, enum: Object.values(BookSource), required: true },
     externalId: { type: String, trim: true },
     isbn: { type: String, trim: true, index: true },
     title: { type: String, required: true, trim: true },
@@ -16,13 +15,16 @@ const bookSchema = new mongoose.Schema(
     categories: [{ type: String, trim: true }],
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // Partial so manual books (no externalId) are not constrained
 bookSchema.index(
   { source: 1, externalId: 1 },
-  { unique: true, partialFilterExpression: { externalId: { $type: "string" } } }
+  {
+    unique: true,
+    partialFilterExpression: { externalId: { $type: "string" } },
+  },
 );
 
 export type BookDoc = InferSchemaType<typeof bookSchema>;

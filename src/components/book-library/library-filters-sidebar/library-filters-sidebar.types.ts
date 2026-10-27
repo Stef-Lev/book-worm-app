@@ -1,5 +1,5 @@
+import type { LibraryFilterKey } from "@/lib/library";
 import type {
-  LibraryFilterKey,
   LibraryFilterSection,
   LibraryFilterValues,
 } from "@/components/book-library/library-filters-drawer/library-filters-drawer.types";

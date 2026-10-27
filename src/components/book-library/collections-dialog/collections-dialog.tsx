@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { Dialog } from "@ark-ui/react/dialog";
-import { Portal } from "@ark-ui/react/portal";
+import DialogOverlay from "@/components/dialog-overlay/dialog-overlay";
 import { FolderCog, Plus, Save, Trash2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "react-toastify";
+import { fetchJson, getErrorMessage } from "@/lib/fetch-json";
 import { getNotificationRegion } from "@/lib/notifications";
 import Button from "@/components/button/button";
 import IconButton from "@/components/icon-button/icon-button";
@@ -36,19 +37,10 @@ export default function CollectionsDialog({
     if (!name) return;
     setBusyId(collection?.id ?? "create");
     try {
-      const response = await fetch(
+      const data = await fetchJson<{ collection: BookCollection }>(
         collection ? `/api/collections/${collection.id}` : "/api/collections",
-        {
-          method: collection ? "PATCH" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name }),
-        },
+        { method: collection ? "PATCH" : "POST", json: { name } },
       );
-      const data = (await response.json()) as {
-        collection: BookCollection;
-        error?: string;
-      };
-      if (!response.ok) throw new Error(data.error ?? t("genericError"));
       const next = collection
         ? collections.map((item) =>
             item.id === collection.id ? data.collection : item,
@@ -62,7 +54,7 @@ export default function CollectionsDialog({
         collection ? t("collectionRenamed") : t("collectionCreated"),
       );
     } catch (reason) {
-      toast.error(reason instanceof Error ? reason.message : t("genericError"));
+      toast.error(getErrorMessage(reason, t("genericError")));
     } finally {
       setBusyId("");
     }
@@ -71,17 +63,15 @@ export default function CollectionsDialog({
   async function deleteCollection(collection: BookCollection) {
     setBusyId(collection.id);
     try {
-      const response = await fetch(`/api/collections/${collection.id}`, {
+      await fetchJson(`/api/collections/${collection.id}`, {
         method: "DELETE",
       });
-      const data = (await response.json()) as { error?: string };
-      if (!response.ok) throw new Error(data.error ?? t("genericError"));
       onChange(collections.filter((item) => item.id !== collection.id));
       onDeleted(collection.id);
       setPendingDelete(null);
       toast.success(t("collectionDeleted"));
     } catch (reason) {
-      toast.error(reason instanceof Error ? reason.message : t("genericError"));
+      toast.error(getErrorMessage(reason, t("genericError")));
     } finally {
       setBusyId("");
     }
@@ -106,110 +96,105 @@ export default function CollectionsDialog({
           {t("manageCollections")}
         </Button>
       </Dialog.Trigger>
-      <Portal>
-        <Dialog.Backdrop className={styles.backdrop} />
-        <Dialog.Positioner className={styles.positioner}>
-          <Dialog.Content className={styles.dialog}>
-            <div className={styles.header}>
-              <Dialog.Title className={styles.title}>
-                {t("manageCollections")}
-              </Dialog.Title>
-              <Dialog.CloseTrigger asChild>
-                <IconButton label={t("close")} disabled={!!busyId}>
-                  <X aria-hidden="true" />
-                </IconButton>
-              </Dialog.CloseTrigger>
-            </div>
-            <form
-              className={styles.createForm}
-              onSubmit={(event) => void saveCollection(event)}
+      <DialogOverlay>
+        <Dialog.Content className={styles.dialog}>
+          <div className={styles.header}>
+            <Dialog.Title className={styles.title}>
+              {t("manageCollections")}
+            </Dialog.Title>
+            <Dialog.CloseTrigger asChild>
+              <IconButton label={t("close")} disabled={!!busyId}>
+                <X aria-hidden="true" />
+              </IconButton>
+            </Dialog.CloseTrigger>
+          </div>
+          <form
+            className={styles.createForm}
+            onSubmit={(event) => void saveCollection(event)}
+          >
+            <TextInput
+              label={t("collectionName")}
+              fieldClassName={styles.field}
+              name="name"
+              required
+              maxLength={50}
+              disabled={!!busyId}
+            />
+            <Button
+              type="submit"
+              loading={busyId === "create"}
+              disabled={!!busyId}
             >
-              <TextInput
-                label={t("collectionName")}
-                fieldClassName={styles.field}
-                name="name"
-                required
-                maxLength={50}
-                disabled={!!busyId}
-              />
-              <Button
-                type="submit"
-                loading={busyId === "create"}
-                disabled={!!busyId}
-              >
-                <Plus aria-hidden="true" />
-                {t("createCollection")}
-              </Button>
-            </form>
-            {collections.length ? (
-              <ul className={styles.list}>
-                {collections.map((collection) => (
-                  <li key={collection.id}>
-                    <form
-                      className={styles.collectionRow}
-                      onSubmit={(event) =>
-                        void saveCollection(event, collection)
-                      }
+              <Plus aria-hidden="true" />
+              {t("createCollection")}
+            </Button>
+          </form>
+          {collections.length ? (
+            <ul className={styles.list}>
+              {collections.map((collection) => (
+                <li key={collection.id}>
+                  <form
+                    className={styles.collectionRow}
+                    onSubmit={(event) => void saveCollection(event, collection)}
+                  >
+                    <TextInput
+                      label={t("renameCollection", { name: collection.name })}
+                      fieldClassName={styles.field}
+                      name="name"
+                      defaultValue={collection.name}
+                      required
+                      maxLength={50}
+                      disabled={!!busyId}
+                    />
+                    <IconButton
+                      type="submit"
+                      label={t("renameCollection", { name: collection.name })}
+                      disabled={!!busyId}
                     >
-                      <TextInput
-                        label={t("renameCollection", { name: collection.name })}
-                        fieldClassName={styles.field}
-                        name="name"
-                        defaultValue={collection.name}
-                        required
-                        maxLength={50}
-                        disabled={!!busyId}
-                      />
-                      <IconButton
-                        type="submit"
-                        label={t("renameCollection", { name: collection.name })}
-                        disabled={!!busyId}
-                      >
-                        <Save aria-hidden="true" />
-                      </IconButton>
-                      <IconButton
-                        className={styles.deleteButton}
-                        label={t("deleteCollection", { name: collection.name })}
-                        disabled={!!busyId}
-                        onClick={() => setPendingDelete(collection)}
-                      >
-                        <Trash2 aria-hidden="true" />
-                      </IconButton>
-                    </form>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className={styles.empty}>{t("emptyCollections")}</p>
-            )}
-            {pendingDelete && (
-              <div className={styles.confirmation}>
-                <p>
-                  {t("confirmDeleteCollection", { name: pendingDelete.name })}
-                </p>
-                <div className={styles.confirmActions}>
-                  <Button
-                    variant="destructive"
-                    disabled={!!busyId}
-                    loading={busyId === pendingDelete.id}
-                    onClick={() => void deleteCollection(pendingDelete)}
-                  >
-                    <Trash2 aria-hidden="true" />
-                    {t("deleteCollection", { name: pendingDelete.name })}
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    disabled={!!busyId}
-                    onClick={() => setPendingDelete(null)}
-                  >
-                    {t("cancel")}
-                  </Button>
-                </div>
+                      <Save aria-hidden="true" />
+                    </IconButton>
+                    <IconButton
+                      className={styles.deleteButton}
+                      label={t("deleteCollection", { name: collection.name })}
+                      disabled={!!busyId}
+                      onClick={() => setPendingDelete(collection)}
+                    >
+                      <Trash2 aria-hidden="true" />
+                    </IconButton>
+                  </form>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className={styles.empty}>{t("emptyCollections")}</p>
+          )}
+          {pendingDelete && (
+            <div className={styles.confirmation}>
+              <p>
+                {t("confirmDeleteCollection", { name: pendingDelete.name })}
+              </p>
+              <div className={styles.confirmActions}>
+                <Button
+                  variant="destructive"
+                  disabled={!!busyId}
+                  loading={busyId === pendingDelete.id}
+                  onClick={() => void deleteCollection(pendingDelete)}
+                >
+                  <Trash2 aria-hidden="true" />
+                  {t("deleteCollection", { name: pendingDelete.name })}
+                </Button>
+                <Button
+                  variant="secondary"
+                  disabled={!!busyId}
+                  onClick={() => setPendingDelete(null)}
+                >
+                  {t("cancel")}
+                </Button>
               </div>
-            )}
-          </Dialog.Content>
-        </Dialog.Positioner>
-      </Portal>
+            </div>
+          )}
+        </Dialog.Content>
+      </DialogOverlay>
     </Dialog.Root>
   );
 }

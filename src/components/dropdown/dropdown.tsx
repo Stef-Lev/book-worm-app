@@ -1,9 +1,9 @@
 "use client";
 
-import { useId } from "react";
 import * as Select from "@radix-ui/react-select";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 import FormField from "@/components/form-field/form-field";
+import { useFormField } from "@/components/form-field/use-form-field";
 import { cn } from "@/lib/cn";
 import styles from "./dropdown.module.css";
 import type { DropdownProps } from "./dropdown.types";
@@ -27,14 +27,17 @@ export default function Dropdown({
   "aria-invalid": invalid,
   ...rest
 }: DropdownProps) {
-  const generatedId = useId();
-  const fieldId = id ?? generatedId;
-  const messageId = `${fieldId}-message`;
-  const message = error ?? hint;
+  const field = useFormField({
+    id,
+    hint,
+    error,
+    "aria-describedby": describedBy,
+    "aria-invalid": invalid,
+  });
 
   return (
     <FormField
-      id={fieldId}
+      id={field.id}
       label={label}
       hint={hint}
       error={error}
@@ -51,13 +54,7 @@ export default function Dropdown({
       >
         <Select.Trigger
           {...rest}
-          id={fieldId}
-          aria-invalid={error ? true : invalid}
-          aria-describedby={
-            [describedBy, message ? messageId : undefined]
-              .filter(Boolean)
-              .join(" ") || undefined
-          }
+          {...field}
           className={cn(
             styles.trigger,
             size === "sm" && styles.compact,

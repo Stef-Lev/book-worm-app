@@ -1,3 +1,5 @@
+import type { LibraryMode } from "@/lib/library";
+
 export type LibraryUrlFilters = {
   q?: string;
   status?: string;
@@ -8,7 +10,7 @@ export type LibraryUrlFilters = {
 };
 
 export type BookLibraryProps = {
-  mode: "library" | "search";
+  mode: LibraryMode;
   initialQuery?: string;
   initialFilters?: LibraryUrlFilters;
 };

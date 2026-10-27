@@ -2,7 +2,7 @@
 
 import styles from "./book-entry.module.css";
 import { Dialog } from "@ark-ui/react/dialog";
-import { Portal } from "@ark-ui/react/portal";
+import DialogOverlay from "@/components/dialog-overlay/dialog-overlay";
 import { AlertTriangle, Save, Trash2 } from "lucide-react";
 import Dropdown from "@/components/dropdown/dropdown";
 import Button from "@/components/button/button";
@@ -10,15 +10,11 @@ import BookCover from "@/components/book-cover/book-cover";
 import DateInput from "@/components/date-input/date-input";
 import Textarea from "@/components/textarea/textarea";
 import StarRating from "@/components/star-rating/star-rating";
+import { toCollectionOptions } from "@/lib/collections";
+import { toDateOnly } from "@/lib/dates";
 import { getNotificationRegion } from "@/lib/notifications";
-import type { BookEntryProps, Shelf } from "./book-entry.types";
-
-const shelves: Shelf[] = [
-  "to-read",
-  "currently-reading",
-  "read",
-  "did-not-finish",
-];
+import { SHELVES, Shelf, isShelf } from "@/lib/shelves";
+import type { BookEntryProps } from "./book-entry.types";
 
 export default function BookEntry({
   entry,
@@ -35,22 +31,22 @@ export default function BookEntry({
   );
 
   const showStarted =
-    entry.status === "currently-reading" || entry.status === "read";
-  const showFinished = entry.status === "read";
+    entry.status === Shelf.CurrentlyReading || entry.status === Shelf.Read;
+  const showFinished = entry.status === Shelf.Read;
   const showFeedback =
-    entry.status === "read" || entry.status === "did-not-finish";
+    entry.status === Shelf.Read || entry.status === Shelf.DidNotFinish;
 
   function update(changes: Partial<BookEntryProps["entry"]>) {
     onChange(entry.id, changes);
   }
 
   function changeStatus(status: Shelf) {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = toDateOnly();
     update({
       status,
-      ...(status === "currently-reading" &&
+      ...(status === Shelf.CurrentlyReading &&
         !entry.startedAt && { startedAt: today }),
-      ...(status === "read" && !entry.finishedAt && { finishedAt: today }),
+      ...(status === Shelf.Read && !entry.finishedAt && { finishedAt: today }),
     });
   }
 
@@ -82,10 +78,9 @@ export default function BookEntry({
           value={entry.status}
           disabled={busy}
           onValueChange={(value) => {
-            const status = shelves.find((shelf) => shelf === value);
-            if (status) changeStatus(status);
+            if (isShelf(value)) changeStatus(value);
           }}
-          options={shelves.map((shelf) => ({
+          options={SHELVES.map((shelf) => ({
             value: shelf,
             label: shelfNames[shelf],
           }))}
@@ -99,13 +94,7 @@ export default function BookEntry({
           onValueChange={(value) =>
             update({ collectionIds: value ? [value] : [] })
           }
-          options={[
-            { value: "", label: labels.noCollection },
-            ...collections.map((collection) => ({
-              value: collection.id,
-              label: collection.name,
-            })),
-          ]}
+          options={toCollectionOptions(collections, labels.noCollection)}
         />
         {(showStarted || showFinished) && (
           <div className={styles.dates}>
@@ -168,35 +157,32 @@ export default function BookEntry({
               {labels.remove}
             </Button>
           </Dialog.Trigger>
-          <Portal>
-            <Dialog.Backdrop className={styles.backdrop} />
-            <Dialog.Positioner className={styles.positioner}>
-              <Dialog.Content className={styles.removeDialog}>
-                <Dialog.Title className={styles.removeTitle}>
-                  <AlertTriangle aria-hidden="true" />
-                  {labels.removeTitle}
-                </Dialog.Title>
-                <Dialog.Description className={styles.removeDescription}>
-                  {labels.confirmRemove(entry.book.title)}
-                </Dialog.Description>
-                <div className={styles.dialogActions}>
-                  <Dialog.CloseTrigger asChild>
-                    <Button variant="secondary">{labels.cancel}</Button>
-                  </Dialog.CloseTrigger>
-                  <Dialog.CloseTrigger asChild>
-                    <Button
-                      variant="destructive"
-                      disabled={busy}
-                      onClick={() => onRemove(entry)}
-                    >
-                      <Trash2 aria-hidden="true" />
-                      {labels.remove}
-                    </Button>
-                  </Dialog.CloseTrigger>
-                </div>
-              </Dialog.Content>
-            </Dialog.Positioner>
-          </Portal>
+          <DialogOverlay>
+            <Dialog.Content className={styles.removeDialog}>
+              <Dialog.Title className={styles.removeTitle}>
+                <AlertTriangle aria-hidden="true" />
+                {labels.removeTitle}
+              </Dialog.Title>
+              <Dialog.Description className={styles.removeDescription}>
+                {labels.confirmRemove(entry.book.title)}
+              </Dialog.Description>
+              <div className={styles.dialogActions}>
+                <Dialog.CloseTrigger asChild>
+                  <Button variant="secondary">{labels.cancel}</Button>
+                </Dialog.CloseTrigger>
+                <Dialog.CloseTrigger asChild>
+                  <Button
+                    variant="destructive"
+                    disabled={busy}
+                    onClick={() => onRemove(entry)}
+                  >
+                    <Trash2 aria-hidden="true" />
+                    {labels.remove}
+                  </Button>
+                </Dialog.CloseTrigger>
+              </div>
+            </Dialog.Content>
+          </DialogOverlay>
         </Dialog.Root>
       </div>
     </article>

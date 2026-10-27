@@ -47,21 +47,6 @@
   font-size: var(--font-size-xs);
 }
 
-.backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  background: color-mix(in srgb, var(--color-black) 45%, transparent);
-}
-
-.positioner {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  display: flex;
-  align-items: flex-end;
-}
-
 .drawer {
   display: flex;
   flex-direction: column;

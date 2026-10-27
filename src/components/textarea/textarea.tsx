@@ -1,7 +1,7 @@
 "use client";
 
-import { useId } from "react";
 import FormField from "@/components/form-field/form-field";
+import { useFormField } from "@/components/form-field/use-form-field";
 import { cn } from "@/lib/cn";
 import styles from "./textarea.module.css";
 import type { TextareaProps } from "./textarea.types";
@@ -18,14 +18,17 @@ export default function Textarea({
   "aria-invalid": invalid,
   ...rest
 }: TextareaProps) {
-  const generatedId = useId();
-  const fieldId = id ?? generatedId;
-  const messageId = `${fieldId}-message`;
-  const message = error ?? hint;
+  const field = useFormField({
+    id,
+    hint,
+    error,
+    "aria-describedby": describedBy,
+    "aria-invalid": invalid,
+  });
 
   return (
     <FormField
-      id={fieldId}
+      id={field.id}
       label={label}
       hint={hint}
       error={error}
@@ -33,14 +36,8 @@ export default function Textarea({
     >
       <textarea
         {...rest}
-        id={fieldId}
+        {...field}
         rows={rows}
-        aria-invalid={error ? true : invalid}
-        aria-describedby={
-          [describedBy, message ? messageId : undefined]
-            .filter(Boolean)
-            .join(" ") || undefined
-        }
         className={cn(styles.textarea, error && styles.invalid, className)}
       />
     </FormField>

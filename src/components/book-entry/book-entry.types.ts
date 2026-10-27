@@ -1,4 +1,7 @@
-export type Shelf = "to-read" | "currently-reading" | "read" | "did-not-finish";
+import type { BookSource } from "@/lib/book-source";
+import type { Shelf } from "@/lib/shelves";
+
+export type { Shelf };
 
 export type BookEntryData = {
   id: string;
@@ -11,7 +14,7 @@ export type BookEntryData = {
   createdAt: string;
   book: {
     id: string;
-    source: string;
+    source: BookSource;
     externalId?: string;
     title: string;
     authors: string[];

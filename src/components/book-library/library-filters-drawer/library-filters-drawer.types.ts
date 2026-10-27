@@ -1,14 +1,7 @@
 import type { DropdownOption } from "@/components/dropdown/dropdown.types";
+import type { LibraryFilterKey } from "@/lib/library";
 
-export type LibraryFilterValues = {
-  shelf: string;
-  author: string;
-  category: string;
-  collection: string;
-  sortBy: string;
-};
-
-export type LibraryFilterKey = keyof LibraryFilterValues;
+export type LibraryFilterValues = Record<LibraryFilterKey, string>;
 
 export type LibraryFilterSection = {
   key: LibraryFilterKey;

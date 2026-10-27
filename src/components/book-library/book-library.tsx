@@ -29,28 +29,29 @@ import type {
 import type {
   BookCollection,
   BookEntryData,
-  Shelf,
 } from "@/components/book-entry/book-entry.types";
+import { toCollectionOptions } from "@/lib/collections";
+import { fetchJson, getErrorMessage } from "@/lib/fetch-json";
+import { BookSource } from "@/lib/book-source";
+import {
+  ALL_SHELVES,
+  LibraryFilterKey,
+  LibraryMode,
+  LibrarySort,
+  toLibrarySort,
+  toShelfFilter,
+} from "@/lib/library";
+import type { FacetKey, ShelfFilter } from "@/lib/library";
+import type { NewBook } from "@/lib/open-library";
+import { SHELVES, Shelf, isShelf } from "@/lib/shelves";
 import styles from "./book-library.module.css";
 import type { BookLibraryProps } from "./book-library.types";
-
-type CatalogBook = {
-  source: "open-library" | "manual";
-  externalId?: string;
-  isbn?: string;
-  title: string;
-  authors: string[];
-  pageCount: number;
-  publishedDate?: string;
-  categories: string[];
-  coverUrl?: string;
-};
 
 type LibraryResponse = {
   entries: BookEntryData[];
   collections: BookCollection[];
 };
-type SearchResponse = { results: CatalogBook[] };
+type SearchResponse = { results: NewBook[] };
 type BarcodeResult = { rawValue: string };
 type BarcodeDetectorInstance = {
   detect: (source: HTMLVideoElement) => Promise<BarcodeResult[]>;
@@ -60,24 +61,21 @@ type BarcodeDetectorConstructor = new (options: {
 }) => BarcodeDetectorInstance;
 
 const filterDefaults: LibraryFilterValues = {
-  shelf: "all",
-  author: "",
-  category: "",
-  collection: "",
-  sortBy: "title",
+  [LibraryFilterKey.Shelf]: ALL_SHELVES,
+  [LibraryFilterKey.Author]: "",
+  [LibraryFilterKey.Category]: "",
+  [LibraryFilterKey.Collection]: "",
+  [LibraryFilterKey.SortBy]: LibrarySort.Title,
 };
 
-const shelves: Shelf[] = [
-  "to-read",
-  "currently-reading",
-  "read",
-  "did-not-finish",
-];
+function fetchLibrary() {
+  return fetchJson<LibraryResponse>("/api/library");
+}
 
-async function responseJson<T>(response: Response): Promise<T> {
-  const data = (await response.json()) as T & { error?: string };
-  if (!response.ok) throw new Error(data.error ?? "Something went wrong.");
-  return data;
+async function fetchSearchResults(searchTerm: string) {
+  const params = new URLSearchParams({ q: searchTerm });
+  const data = await fetchJson<SearchResponse>(`/api/books/search?${params}`);
+  return data.results;
 }
 
 // Entries without a value (unrated, unfinished) always sort after those with one.
@@ -92,12 +90,6 @@ function compareMissingLast<T>(
   return compare(first, second);
 }
 
-const sortValues = ["title", "author", "rating", "page-count", "date-added"];
-
-function toShelfFilter(value: string): Shelf | "all" {
-  return shelves.find((shelf) => shelf === value) ?? "all";
-}
-
 function normalizeIsbn(value: string) {
   return value.replace(/[\s-]/g, "").toUpperCase();
 }
@@ -108,14 +100,14 @@ export default function BookLibrary({
   initialFilters = {},
 }: BookLibraryProps) {
   const t = useTranslations("libraryWorkspace");
-  const isSearch = mode === "search";
+  const isSearch = mode === LibraryMode.Search;
   const [entries, setEntries] = useState<BookEntryData[]>([]);
   const [collections, setCollections] = useState<BookCollection[]>([]);
   const [query, setQuery] = useState(initialQuery);
   const [libraryQuery, setLibraryQuery] = useState(initialFilters.q ?? "");
-  const [results, setResults] = useState<CatalogBook[]>([]);
-  const [shelfFilter, setShelfFilter] = useState<Shelf | "all">(() =>
-    toShelfFilter(initialFilters.status ?? ""),
+  const [results, setResults] = useState<NewBook[]>([]);
+  const [shelfFilter, setShelfFilter] = useState<ShelfFilter>(() =>
+    toShelfFilter(initialFilters.status),
   );
   const [collectionFilter, setCollectionFilter] = useState(
     initialFilters.collection ?? "",
@@ -127,11 +119,9 @@ export default function BookLibrary({
   const [libraryLoaded, setLibraryLoaded] = useState(false);
   const [libraryLoadFailed, setLibraryLoadFailed] = useState(false);
   const [sortBy, setSortBy] = useState(() =>
-    sortValues.includes(initialFilters.sort ?? "")
-      ? (initialFilters.sort ?? "title")
-      : "title",
+    toLibrarySort(initialFilters.sort),
   );
-  const [searchShelf, setSearchShelf] = useState<Shelf>("to-read");
+  const [searchShelf, setSearchShelf] = useState(Shelf.ToRead);
   const [searchCollection, setSearchCollection] = useState("");
   const [busyId, setBusyId] = useState("");
   const [busy, setBusy] = useState(false);
@@ -140,33 +130,39 @@ export default function BookLibrary({
   const streamRef = useRef<MediaStream | null>(null);
   const scanCancelled = useRef(false);
 
-  const searchCatalog = useCallback(
-    async (searchTerm: string, showLoading = true) => {
-      if (showLoading) {
-        setBusy(true);
-      }
-      try {
-        const params = new URLSearchParams({ q: searchTerm });
-        const data = await responseJson<SearchResponse>(
-          await fetch(`/api/books/search?${params}`),
-        );
-        setResults(data.results);
-        if (!data.results.length) toast.info(t("noSearchResults"));
-      } catch (reason) {
-        toast.error(
-          reason instanceof Error ? reason.message : t("genericError"),
-        );
-      } finally {
-        setBusy(false);
-      }
+  const showResults = useCallback(
+    (found: NewBook[]) => {
+      setResults(found);
+      if (!found.length) toast.info(t("noSearchResults"));
     },
     [t],
   );
 
+  const announceError = useCallback(
+    (reason: unknown, fallback = t("genericError")) => {
+      toast.error(getErrorMessage(reason, fallback));
+    },
+    [t],
+  );
+
+  async function searchCatalog(searchTerm: string) {
+    setBusy(true);
+    try {
+      showResults(await fetchSearchResults(searchTerm));
+    } catch (reason) {
+      announceError(reason);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function reloadEntries() {
+    setEntries((await fetchLibrary()).entries);
+  }
+
   useEffect(() => {
     let active = true;
-    fetch("/api/library")
-      .then((response) => responseJson<LibraryResponse>(response))
+    fetchLibrary()
       .then((data) => {
         if (!active) return;
         setEntries(data.entries);
@@ -177,42 +173,31 @@ export default function BookLibrary({
       .catch((reason: unknown) => {
         if (!active) return;
         setLibraryLoadFailed(true);
-        toast.error(reason instanceof Error ? reason.message : t("loadError"));
+        announceError(reason, t("loadError"));
       });
     return () => {
       active = false;
       scanCancelled.current = true;
       streamRef.current?.getTracks().forEach((track) => track.stop());
     };
-  }, [t]);
+  }, [announceError, t]);
 
   useEffect(() => {
     if (!isSearch || initialQuery.trim().length < 2) return;
     let active = true;
-    const params = new URLSearchParams({ q: initialQuery });
-    fetch(`/api/books/search?${params}`)
-      .then((response) => responseJson<SearchResponse>(response))
-      .then((data) => {
-        if (!active) return;
-        setResults(data.results);
-        if (!data.results.length) toast.info(t("noSearchResults"));
-      })
-      .catch((reason: unknown) => {
-        if (!active) return;
-        toast.error(
-          reason instanceof Error ? reason.message : t("genericError"),
-        );
-      });
+    fetchSearchResults(initialQuery)
+      .then((found) => active && showResults(found))
+      .catch((reason: unknown) => active && announceError(reason));
     return () => {
       active = false;
     };
-  }, [initialQuery, isSearch, t]);
+  }, [announceError, initialQuery, isSearch, showResults]);
 
   const shelfNames: Record<Shelf, string> = {
-    "to-read": t("shelfToRead"),
-    "currently-reading": t("shelfCurrentlyReading"),
-    read: t("shelfRead"),
-    "did-not-finish": t("shelfDidNotFinish"),
+    [Shelf.ToRead]: t("shelfToRead"),
+    [Shelf.CurrentlyReading]: t("shelfCurrentlyReading"),
+    [Shelf.Read]: t("shelfRead"),
+    [Shelf.DidNotFinish]: t("shelfDidNotFinish"),
   };
 
   useEffect(() => {
@@ -220,11 +205,11 @@ export default function BookLibrary({
     const params = new URLSearchParams();
     const values: [string, string, string][] = [
       ["q", libraryQuery.trim(), ""],
-      ["status", shelfFilter, "all"],
+      ["status", shelfFilter, ALL_SHELVES],
       ["author", authorFilter, ""],
       ["category", categoryFilter, ""],
       ["collection", collectionFilter, ""],
-      ["sort", sortBy, "title"],
+      ["sort", sortBy, LibrarySort.Title],
     ];
     for (const [key, value, fallback] of values) {
       if (value !== fallback) params.set(key, value);
@@ -255,19 +240,16 @@ export default function BookLibrary({
     if (isSearch) return;
     function syncFromUrl() {
       const params = new URLSearchParams(window.location.search);
-      const sort = params.get("sort") ?? "";
       setLibraryQuery(params.get("q") ?? "");
-      setShelfFilter(toShelfFilter(params.get("status") ?? ""));
+      setShelfFilter(toShelfFilter(params.get("status")));
       setAuthorFilter(params.get("author") ?? "");
       setCategoryFilter(params.get("category") ?? "");
       setCollectionFilter(params.get("collection") ?? "");
-      setSortBy(sortValues.includes(sort) ? sort : "title");
+      setSortBy(toLibrarySort(params.get("sort")));
     }
     window.addEventListener("popstate", syncFromUrl);
     return () => window.removeEventListener("popstate", syncFromUrl);
   }, [isSearch]);
-
-  type FacetKey = "shelf" | "author" | "category" | "collection";
 
   const matchesFilters = useCallback(
     (entry: BookEntryData, ignore?: FacetKey) => {
@@ -285,16 +267,16 @@ export default function BookLibrary({
           normalizeIsbn(entry.book.isbn ?? "").includes(isbnSearch));
       return (
         matchesQuery &&
-        (ignore === "shelf" ||
-          shelfFilter === "all" ||
+        (ignore === LibraryFilterKey.Shelf ||
+          shelfFilter === ALL_SHELVES ||
           entry.status === shelfFilter) &&
-        (ignore === "collection" ||
+        (ignore === LibraryFilterKey.Collection ||
           !collectionFilter ||
           entry.collectionIds.includes(collectionFilter)) &&
-        (ignore === "author" ||
+        (ignore === LibraryFilterKey.Author ||
           !authorFilter ||
           entry.book.authors.includes(authorFilter)) &&
-        (ignore === "category" ||
+        (ignore === LibraryFilterKey.Category ||
           !categoryFilter ||
           entry.book.categories.includes(categoryFilter))
       );
@@ -306,15 +288,15 @@ export default function BookLibrary({
     const filtered = entries.filter((entry) => matchesFilters(entry));
     return filtered.sort((a, b) => {
       switch (sortBy) {
-        case "author":
+        case LibrarySort.Author:
           return (a.book.authors[0] ?? "").localeCompare(
             b.book.authors[0] ?? "",
           );
-        case "rating":
+        case LibrarySort.Rating:
           return compareMissingLast(a.rating, b.rating, (x, y) => y - x);
-        case "page-count":
+        case LibrarySort.PageCount:
           return b.book.pageCount - a.book.pageCount;
-        case "date-added":
+        case LibrarySort.DateAdded:
           return b.createdAt.localeCompare(a.createdAt);
         default:
           return a.book.title.localeCompare(b.book.title);
@@ -330,21 +312,27 @@ export default function BookLibrary({
       (first, second) => first.localeCompare(second),
     );
 
-  const shelfEntries = facetEntries("shelf");
+  const shelfEntries = facetEntries(LibraryFilterKey.Shelf);
   const authors = uniqueSorted(
-    facetEntries("author").flatMap((entry) => entry.book.authors),
+    facetEntries(LibraryFilterKey.Author).flatMap(
+      (entry) => entry.book.authors,
+    ),
     authorFilter,
   );
   const categories = uniqueSorted(
-    facetEntries("category").flatMap((entry) => entry.book.categories),
+    facetEntries(LibraryFilterKey.Category).flatMap(
+      (entry) => entry.book.categories,
+    ),
     categoryFilter,
   );
   const collectionIdsInUse = new Set(
-    facetEntries("collection").flatMap((entry) => entry.collectionIds),
+    facetEntries(LibraryFilterKey.Collection).flatMap(
+      (entry) => entry.collectionIds,
+    ),
   );
   const statusOptions = [
-    { value: "all", label: `${t("allBooks")} (${shelfEntries.length})` },
-    ...shelves.map((shelf) => ({
+    { value: ALL_SHELVES, label: `${t("allBooks")} (${shelfEntries.length})` },
+    ...SHELVES.map((shelf) => ({
       value: shelf,
       label: `${shelfNames[shelf]} (${shelfEntries.filter((entry) => entry.status === shelf).length})`,
     })),
@@ -357,51 +345,58 @@ export default function BookLibrary({
     { value: "", label: t("allCategories") },
     ...categories.map((category) => ({ value: category, label: category })),
   ];
-  const collectionOptions = [
-    { value: "", label: t("allCollections") },
-    ...collections
-      .filter(
-        (collection) =>
-          collectionIdsInUse.has(collection.id) ||
-          collection.id === collectionFilter,
-      )
-      .map((collection) => ({
-        value: collection.id,
-        label: collection.name,
-      })),
-  ];
+  const collectionOptions = toCollectionOptions(
+    collections.filter(
+      (collection) =>
+        collectionIdsInUse.has(collection.id) ||
+        collection.id === collectionFilter,
+    ),
+    t("allCollections"),
+  );
   const sortOptions = [
-    { value: "title", label: t("sortTitle") },
-    { value: "author", label: t("sortAuthor") },
-    { value: "rating", label: t("sortRating") },
-    { value: "page-count", label: t("sortPageCount") },
-    { value: "date-added", label: t("sortDateAdded") },
+    { value: LibrarySort.Title, label: t("sortTitle") },
+    { value: LibrarySort.Author, label: t("sortAuthor") },
+    { value: LibrarySort.Rating, label: t("sortRating") },
+    { value: LibrarySort.PageCount, label: t("sortPageCount") },
+    { value: LibrarySort.DateAdded, label: t("sortDateAdded") },
   ];
 
   const filterValues: LibraryFilterValues = {
-    shelf: shelfFilter,
-    author: authorFilter,
-    category: categoryFilter,
-    collection: collectionFilter,
-    sortBy,
+    [LibraryFilterKey.Shelf]: shelfFilter,
+    [LibraryFilterKey.Author]: authorFilter,
+    [LibraryFilterKey.Category]: categoryFilter,
+    [LibraryFilterKey.Collection]: collectionFilter,
+    [LibraryFilterKey.SortBy]: sortBy,
   };
   const filterSections: LibraryFilterSection[] = [
-    { key: "sortBy", label: t("sortBy"), options: sortOptions },
-    { key: "shelf", label: t("status"), options: statusOptions },
-    { key: "author", label: t("author"), options: authorOptions },
-    { key: "category", label: t("categories"), options: categoryOptions },
-    { key: "collection", label: t("collection"), options: collectionOptions },
+    { key: LibraryFilterKey.SortBy, label: t("sortBy"), options: sortOptions },
+    { key: LibraryFilterKey.Shelf, label: t("status"), options: statusOptions },
+    {
+      key: LibraryFilterKey.Author,
+      label: t("author"),
+      options: authorOptions,
+    },
+    {
+      key: LibraryFilterKey.Category,
+      label: t("categories"),
+      options: categoryOptions,
+    },
+    {
+      key: LibraryFilterKey.Collection,
+      label: t("collection"),
+      options: collectionOptions,
+    },
   ];
 
   function applyFilters(values: LibraryFilterValues) {
-    setShelfFilter(toShelfFilter(values.shelf));
-    setAuthorFilter(values.author);
-    setCategoryFilter(values.category);
-    setCollectionFilter(values.collection);
-    setSortBy(values.sortBy);
+    setShelfFilter(toShelfFilter(values[LibraryFilterKey.Shelf]));
+    setAuthorFilter(values[LibraryFilterKey.Author]);
+    setCategoryFilter(values[LibraryFilterKey.Category]);
+    setCollectionFilter(values[LibraryFilterKey.Collection]);
+    setSortBy(toLibrarySort(values[LibraryFilterKey.SortBy]));
   }
 
-  function isInLibrary(book: CatalogBook) {
+  function isInLibrary(book: NewBook) {
     return entries.some(
       (entry) =>
         (book.externalId &&
@@ -412,32 +407,22 @@ export default function BookLibrary({
     );
   }
 
-  function announceError(reason: unknown) {
-    toast.error(reason instanceof Error ? reason.message : t("genericError"));
-  }
-
-  async function addBook(book: CatalogBook): Promise<boolean> {
+  async function addBook(book: NewBook): Promise<boolean> {
     if (isInLibrary(book)) {
       toast.info(t("inLibrary"));
       return false;
     }
     setBusy(true);
     try {
-      await responseJson(
-        await fetch("/api/library", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            book,
-            status: searchShelf,
-            collectionIds: searchCollection ? [searchCollection] : [],
-          }),
-        }),
-      );
-      const data = await responseJson<LibraryResponse>(
-        await fetch("/api/library"),
-      );
-      setEntries(data.entries);
+      await fetchJson("/api/library", {
+        method: "POST",
+        json: {
+          book,
+          status: searchShelf,
+          collectionIds: searchCollection ? [searchCollection] : [],
+        },
+      });
+      await reloadEntries();
       toast.success(t("bookAdded"));
       return true;
     } catch (reason) {
@@ -454,8 +439,8 @@ export default function BookLibrary({
     const form = new FormData(formElement);
     const title = String(form.get("title") ?? "").trim();
     const author = String(form.get("author") ?? "").trim();
-    const book: CatalogBook = {
-      source: "manual",
+    const book: NewBook = {
+      source: BookSource.Manual,
       title,
       authors: author ? [author] : [],
       isbn: String(form.get("isbn") ?? "").trim() || undefined,
@@ -472,24 +457,18 @@ export default function BookLibrary({
   async function saveEntry(entry: BookEntryData) {
     setBusyId(entry.id);
     try {
-      await responseJson(
-        await fetch(`/api/library/${entry.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            status: entry.status,
-            rating: entry.rating,
-            review: entry.review,
-            startedAt: entry.startedAt,
-            finishedAt: entry.finishedAt,
-            collectionIds: entry.collectionIds,
-          }),
-        }),
-      );
-      const data = await responseJson<LibraryResponse>(
-        await fetch("/api/library"),
-      );
-      setEntries(data.entries);
+      await fetchJson(`/api/library/${entry.id}`, {
+        method: "PATCH",
+        json: {
+          status: entry.status,
+          rating: entry.rating,
+          review: entry.review,
+          startedAt: entry.startedAt,
+          finishedAt: entry.finishedAt,
+          collectionIds: entry.collectionIds,
+        },
+      });
+      await reloadEntries();
       toast.success(t("changesSaved"));
     } catch (reason) {
       announceError(reason);
@@ -501,9 +480,7 @@ export default function BookLibrary({
   async function removeEntry(entry: BookEntryData) {
     setBusyId(entry.id);
     try {
-      await responseJson(
-        await fetch(`/api/library/${entry.id}`, { method: "DELETE" }),
-      );
+      await fetchJson(`/api/library/${entry.id}`, { method: "DELETE" });
       setEntries((previous) => previous.filter((item) => item.id !== entry.id));
       toast.success(t("bookRemoved"));
     } catch (reason) {
@@ -644,8 +621,10 @@ export default function BookLibrary({
               label={t("addToShelf")}
               fieldClassName={styles.field}
               value={searchShelf}
-              onValueChange={(value) => setSearchShelf(value as Shelf)}
-              options={shelves.map((shelf) => ({
+              onValueChange={(value) => {
+                if (isShelf(value)) setSearchShelf(value);
+              }}
+              options={SHELVES.map((shelf) => ({
                 value: shelf,
                 label: shelfNames[shelf],
               }))}
@@ -655,13 +634,7 @@ export default function BookLibrary({
               fieldClassName={styles.field}
               value={searchCollection}
               onValueChange={setSearchCollection}
-              options={[
-                { value: "", label: t("noCollection") },
-                ...collections.map((collection) => ({
-                  value: collection.id,
-                  label: collection.name,
-                })),
-              ]}
+              options={toCollectionOptions(collections, t("noCollection"))}
             />
           </div>
           {!!results.length && (
