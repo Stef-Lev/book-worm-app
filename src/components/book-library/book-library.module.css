@@ -216,3 +216,7 @@
     grid-template-columns: var(--space-64) minmax(0, 1fr);
   }
 }
+
+.libraryPanel {
+  border-block-end: 0;
+}

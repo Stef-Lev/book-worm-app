@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Dialog } from "@ark-ui/react/dialog";
 import DialogOverlay from "@/components/dialog-overlay/dialog-overlay";
-import { FolderCog, Plus, Save, Trash2, X } from "lucide-react";
+import { FolderCog, Plus, Save, Trash2, TriangleAlert, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "react-toastify";
 import { fetchJson, getErrorMessage } from "@/lib/fetch-json";
@@ -169,12 +169,24 @@ export default function CollectionsDialog({
             <p className={styles.empty}>{t("emptyCollections")}</p>
           )}
           {pendingDelete && (
-            <div className={styles.confirmation}>
-              <p>
+            <div className={styles.confirmation} role="alertdialog">
+              <TriangleAlert
+                className={styles.confirmIcon}
+                aria-hidden="true"
+              />
+              <p className={styles.confirmText}>
                 {t("confirmDeleteCollection", { name: pendingDelete.name })}
               </p>
               <div className={styles.confirmActions}>
                 <Button
+                  variant="outline"
+                  disabled={!!busyId}
+                  onClick={() => setPendingDelete(null)}
+                >
+                  {t("cancel")}
+                </Button>
+                <Button
+                  className={styles.confirmDelete}
                   variant="destructive"
                   disabled={!!busyId}
                   loading={busyId === pendingDelete.id}
@@ -182,13 +194,6 @@ export default function CollectionsDialog({
                 >
                   <Trash2 aria-hidden="true" />
                   {t("deleteCollection", { name: pendingDelete.name })}
-                </Button>
-                <Button
-                  variant="secondary"
-                  disabled={!!busyId}
-                  onClick={() => setPendingDelete(null)}
-                >
-                  {t("cancel")}
                 </Button>
               </div>
             </div>
