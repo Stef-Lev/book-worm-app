@@ -1,5 +1,7 @@
 {
   "nav": {
+    "menu": "Menu",
+    "closeMenu": "Close menu",
     "library": "My Library",
     "analytics": "Analytics",
     "searchLabel": "Search books",

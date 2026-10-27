@@ -3,15 +3,21 @@ import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import LogoutButton from "@/components/logout-button/logout-button";
 import PreferencesSwitcher from "@/components/preferences-switcher/preferences-switcher";
+import MobileNavigation from "@/components/app-header/mobile-navigation/mobile-navigation";
 import styles from "./app-header.module.css";
 import type { AppHeaderProps } from "./app-header.types";
 
 export default async function AppHeader({ theme }: AppHeaderProps) {
   const t = await getTranslations("nav");
+  const links = [
+    { href: "/library", label: t("library") },
+    { href: "/search", label: t("searchLabel") },
+    { href: "/analytics", label: t("analytics") },
+  ];
 
   return (
     <header className={styles.header}>
-      <Link href="/" className={styles.logo}>
+      <Link href="/" className={styles.logo} aria-label="Bookworm">
         <Image
           src="/bookworm-logo.svg"
           alt=""
@@ -19,13 +25,19 @@ export default async function AppHeader({ theme }: AppHeaderProps) {
           height={56}
           className={styles.logoMark}
         />
-        Bookworm
+        <span className={styles.logoText}>Bookworm</span>
       </Link>
       <nav className={styles.nav}>
-        <Link href="/library">{t("library")}</Link>
-        <Link href="/search">{t("searchLabel")}</Link>
-        <Link href="/analytics">{t("analytics")}</Link>
+        {links.map(({ href, label }) => (
+          <Link key={href} href={href}>
+            {label}
+          </Link>
+        ))}
       </nav>
+      <MobileNavigation links={links}>
+        <PreferencesSwitcher theme={theme} />
+        <LogoutButton />
+      </MobileNavigation>
       <div className={styles.account}>
         <PreferencesSwitcher theme={theme} />
         <LogoutButton />
