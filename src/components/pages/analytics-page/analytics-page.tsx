@@ -10,6 +10,7 @@ import YearFilter from "@/components/pages/analytics-page/year-filter/year-filte
 import ReadingOverTime from "@/components/pages/analytics-page/reading-over-time/reading-over-time";
 import { connectDB } from "@/lib/mongodb";
 import { SHELVES, Shelf } from "@/lib/shelves";
+import "@/models/Book";
 import UserBook from "@/models/UserBook";
 import styles from "./analytics-page.module.css";
 import type { AnalyticsPageProps } from "./analytics-page.types";
