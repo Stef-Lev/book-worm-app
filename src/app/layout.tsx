@@ -28,6 +28,8 @@ export const metadata: Metadata = {
 // @TODO: Clean results when the input is cleared
 // @TODO: Analytics, show percentage of whole library completed
 // @TODO: Edit book details functionality
+// @TODO: Implement user profile management
+// @TODO: Add hover cursor pointer where needed
 
 // Applies the saved theme/locale before paint so the static shell never flashes
 const themePattern = `${THEME_COOKIE}=(${Theme.Light}|${Theme.Dark})`;
