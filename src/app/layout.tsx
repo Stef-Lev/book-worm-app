@@ -30,6 +30,8 @@ export const metadata: Metadata = {
 // @TODO: Edit book details functionality
 // @TODO: Implement user profile management
 // @TODO: Add hover cursor pointer where needed
+// @TODO: Create a book details page (?)
+// @TODO: If the book is already in library make it a link to go to the book's details page
 
 // Applies the saved theme/locale before paint so the static shell never flashes
 const themePattern = `${THEME_COOKIE}=(${Theme.Light}|${Theme.Dark})`;
