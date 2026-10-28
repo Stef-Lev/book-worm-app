@@ -805,7 +805,10 @@ export default function BookLibrary({
                 ) : (
                   <EmptyState icon={<BookOpen aria-hidden="true" />}>
                     {t("emptyLibrary")}
-                    <Link href="/search">{t("addBooks")}</Link>
+                    <br />
+                    <Link href="/search">
+                      <strong>{t("addBooks")}</strong>
+                    </Link>
                   </EmptyState>
                 )}
                 {!!entries.length && !visibleEntries.length && (
