@@ -23,6 +23,12 @@ export const metadata: Metadata = {
   description: "Track your reading.",
 };
 
+// @TODO: Create functionality for forgot password
+// @TODO: Scrape public to create an API for greek books, check bookshark
+// @TODO: Clean results when the input is cleared
+// @TODO: Analytics, show percentage of whole library completed
+// @TODO: Edit book details functionality
+
 // Applies the saved theme/locale before paint so the static shell never flashes
 const themePattern = `${THEME_COOKIE}=(${Theme.Light}|${Theme.Dark})`;
 const localePattern = `${LOCALE_COOKIE}=(${Object.values(Locale).join("|")})`;
