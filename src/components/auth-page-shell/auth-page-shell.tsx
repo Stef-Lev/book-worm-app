@@ -24,7 +24,7 @@ export default function AuthPageShell({
       <h1 className={styles.heading}>{title}</h1>
       <p className={styles.description}>{description}</p>
       {children}
-      <p className={styles.footer}>{footer}</p>
+      <div className={styles.footer}>{footer}</div>
     </main>
   );
 }

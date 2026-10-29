@@ -13,15 +13,10 @@ export default async function LoginPage() {
       title={t("title")}
       description={t("description")}
       footer={
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", alignItems: "center" }}>
-          <div>
-            {auth("noAccount")}{" "}
-            <Link href="/register">{auth("registerTitle")}</Link>
-          </div>
-          <Link href="/forgot-password" style={{ fontSize: "0.875rem", opacity: 0.7 }}>
-            Forgot password?
-          </Link>
-        </div>
+        <>
+          {auth("noAccount")}{" "}
+          <Link href="/register">{auth("registerTitle")}</Link>
+        </>
       }
     >
       <AuthForm
