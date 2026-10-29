@@ -591,7 +591,14 @@ export default function BookLibrary({
               fieldClassName={styles.field}
               type="search"
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => {
+                const newValue = event.target.value;
+                setQuery(newValue);
+                // Clear results if the search box is emptied
+                if (newValue.trim().length === 0) {
+                  setResults([]);
+                }
+              }}
               placeholder={t("searchPlaceholder")}
             />
             <Button type="submit" loading={busy}>
