@@ -70,7 +70,7 @@
     },
     "home": {
       "title": "Get some tea, open a book, and settle in",
-      "description": "Find a quiet spot and read at your own pace. PaperSmell takes care of the tracking, ratings, and shelves—so you can just read."
+      "description": "Find a quiet spot and read at your own pace. PaperSmell takes care of the tracking, ratings, and shelves\u2014so you can just read."
     },
     "library": {
       "title": "Library page",
@@ -92,12 +92,12 @@
       "allCollections": "All collections",
       "readingOverTime": "Reading over time",
       "yearlyCompletions": "Books finished per year",
-      "monthlyCompletions": "Books finished per month · {period}",
+      "monthlyCompletions": "Books finished per month \u00b7 {period}",
       "noCompletions": "No books finished in this period yet.",
       "periodCompletionCount": "{period}: {count} books finished",
       "invalidCompletionDates": "Across your library, {count} read books have missing or inconsistent finish dates and are excluded from time-based insights.",
       "libraryOverview": "Your library",
-      "currentShelfSnapshot": "Current shelf counts · not filtered by year",
+      "currentShelfSnapshot": "Current shelf counts \u00b7 not filtered by year",
       "libraryReadPercentage": "Library read",
       "readBooksOutOfTotal": "{read} of {total} books are on the Read shelf",
       "emptyLibrary": "Your library is empty.",
@@ -165,10 +165,31 @@
       "logoutSection": "Sign Out",
       "logoutDescription": "Sign out of your account. You'll need to log back in to access your library.",
       "logout": "Sign out"
+    },
+    "forgotPassword": {
+      "title": "Forgot password?",
+      "description": "Enter your email and we'll send you a link to reset it.",
+      "emailSent": "Check your email for the reset link",
+      "checkEmail": "If an account exists with that email, we've sent a password reset link. Check your email and follow the instructions.",
+      "submit": "Send reset link",
+      "sending": "Sending...",
+      "error": "Something went wrong"
+    },
+    "resetPassword": {
+      "title": "Reset password",
+      "description": "Enter a new password for your account.",
+      "confirmPassword": "Confirm password",
+      "invalidLink": "This reset link is invalid or has expired.",
+      "passwordMismatch": "Passwords do not match",
+      "passwordTooShort": "Password must be at least 6 characters",
+      "submit": "Reset password",
+      "resetting": "Resetting...",
+      "success": "Password reset successfully! You can now log in.",
+      "error": "Something went wrong"
     }
   },
   "libraryWorkspace": {
-    "title": "My Library",
+    "title": "Title",
     "description": "Organize your books into shelves and collections, and keep your ratings and reviews.",
     "loadError": "Your library could not be loaded.",
     "genericError": "Something went wrong. Please try again.",
@@ -207,7 +228,7 @@
     "pages": "pages",
     "categories": "Categories",
     "categoryHint": "Separate categories with commas",
-    "coverUrl": "Cover image URL",
+    "coverUrl": "Cover URL",
     "customCollections": "Custom collections",
     "manageCollections": "Manage collections",
     "renameCollection": "Rename {name}",
@@ -220,7 +241,7 @@
     "collectionCreated": "Collection created.",
     "collectionDeleted": "Collection deleted.",
     "deleteCollection": "Delete {name}",
-    "confirmDeleteCollection": "Delete the collection “{name}”? Books will remain in your library.",
+    "confirmDeleteCollection": "Delete the collection \u201c{name}\u201d? Books will remain in your library.",
     "yourLibrary": "Your books",
     "allBooks": "All books",
     "shelfToRead": "To Read",
@@ -247,15 +268,12 @@
     "saving": "Saving...",
     "remove": "Remove from library",
     "removeTitle": "Permanently remove this book?",
-    "confirmRemove": "This will permanently remove “{title}” from your library, including your reading progress, dates, rating, review, and collection assignments. This cannot be undone.",
+    "confirmRemove": "This will permanently remove \u201c{title}\u201d from your library, including your reading progress, dates, rating, review, and collection assignments. This cannot be undone.",
     "bookRemoved": "Book removed from your library.",
     "editBookDetails": "Edit book details",
-    "title": "Title",
     "authors": "Authors",
     "pageCount": "Page count",
-    "coverUrl": "Cover URL",
     "addAuthor": "Add author",
-    "close": "Close",
     "changesSaved": "Changes saved.",
     "emptyLibrary": "Your library is empty.",
     "noBooksMatch": "No books match these filters."

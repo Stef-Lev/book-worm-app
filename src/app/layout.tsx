@@ -24,8 +24,6 @@ export const metadata: Metadata = {
   description: "Track your reading.",
 };
 
-// @TODO: Create functionality for forgot password
-
 // Applies the saved theme/locale before paint so the static shell never flashes
 const themePattern = `${THEME_COOKIE}=(${Theme.Light}|${Theme.Dark})`;
 const localePattern = `${LOCALE_COOKIE}=(${Object.values(Locale).join("|")})`;
