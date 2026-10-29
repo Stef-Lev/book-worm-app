@@ -22,6 +22,7 @@ import BookCover from "@/components/book-cover/book-cover";
 import EmptyState from "@/components/book-library/empty-state/empty-state";
 import LibraryFiltersDrawer from "@/components/book-library/library-filters-drawer/library-filters-drawer";
 import LibraryFiltersSidebar from "@/components/book-library/library-filters-sidebar/library-filters-sidebar";
+import SelectedFiltersPills from "@/components/book-library/selected-filters-pills/selected-filters-pills";
 import type {
   LibraryFilterSection,
   LibraryFilterValues,
@@ -394,6 +395,10 @@ export default function BookLibrary({
     setCategoryFilter(values[LibraryFilterKey.Category]);
     setCollectionFilter(values[LibraryFilterKey.Collection]);
     setSortBy(toLibrarySort(values[LibraryFilterKey.SortBy]));
+  }
+
+  function removeFilter(key: LibraryFilterKey) {
+    applyFilters({ ...filterValues, [key]: filterDefaults[key] });
   }
 
   function isInLibrary(book: NewBook) {
@@ -790,6 +795,13 @@ export default function BookLibrary({
                   defaults={filterDefaults}
                   sections={filterSections}
                   onApply={applyFilters}
+                />
+                <SelectedFiltersPills
+                  values={filterValues}
+                  defaults={filterDefaults}
+                  sections={filterSections}
+                  onRemoveFilter={removeFilter}
+                  onClearAll={() => applyFilters(filterDefaults)}
                 />
                 {!libraryLoaded ? (
                   !libraryLoadFailed && (
