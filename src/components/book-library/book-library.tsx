@@ -40,7 +40,6 @@ import {
   LibraryMode,
   LibrarySort,
   toLibrarySort,
-  toShelfFilter,
 } from "@/lib/library";
 import type { FacetKey, ShelfFilter } from "@/lib/library";
 import type { NewBook } from "@/lib/open-library";
@@ -62,9 +61,9 @@ type BarcodeDetectorConstructor = new (options: {
 }) => BarcodeDetectorInstance;
 
 const filterDefaults: LibraryFilterValues = {
-  [LibraryFilterKey.Shelf]: ALL_SHELVES,
-  [LibraryFilterKey.Author]: "",
-  [LibraryFilterKey.Category]: "",
+  [LibraryFilterKey.Shelf]: [],
+  [LibraryFilterKey.Author]: [],
+  [LibraryFilterKey.Category]: [],
   [LibraryFilterKey.Collection]: "",
   [LibraryFilterKey.SortBy]: LibrarySort.Title,
 };
@@ -95,6 +94,25 @@ function normalizeIsbn(value: string) {
   return value.replace(/[\s-]/g, "").toUpperCase();
 }
 
+function parseMultiSelectFilter(value: string | string[]): string[] {
+  if (Array.isArray(value)) return value;
+  return value ? value.split(",").filter(Boolean) : [];
+}
+
+function serializeMultiSelectFilter(values: string[]): string {
+  return values.join(",");
+}
+
+function filterMatchesValue(
+  filterValue: string | string[],
+  entryValue: string | string[],
+): boolean {
+  const filterValues = parseMultiSelectFilter(filterValue);
+  if (filterValues.length === 0) return true;
+  const entryValues = Array.isArray(entryValue) ? entryValue : [entryValue];
+  return filterValues.some((fv) => entryValues.includes(fv));
+}
+
 export default function BookLibrary({
   mode,
   initialQuery = "",
@@ -107,16 +125,23 @@ export default function BookLibrary({
   const [query, setQuery] = useState(initialQuery);
   const [libraryQuery, setLibraryQuery] = useState(initialFilters.q ?? "");
   const [results, setResults] = useState<NewBook[]>([]);
-  const [shelfFilter, setShelfFilter] = useState<ShelfFilter>(() =>
-    toShelfFilter(initialFilters.status),
-  );
+  const [shelfFilter, setShelfFilter] = useState<ShelfFilter>(() => {
+    const status = initialFilters.status;
+    if (!status) return [];
+    if (typeof status === 'string' && status === ALL_SHELVES) return [];
+    return status ? [status as Shelf] : [];
+  });
   const [collectionFilter, setCollectionFilter] = useState(
     initialFilters.collection ?? "",
   );
-  const [authorFilter, setAuthorFilter] = useState(initialFilters.author ?? "");
-  const [categoryFilter, setCategoryFilter] = useState(
-    initialFilters.category ?? "",
-  );
+  const [authorFilter, setAuthorFilter] = useState<string | string[]>(() => {
+    const author = initialFilters.author ?? "";
+    return parseMultiSelectFilter(author);
+  });
+  const [categoryFilter, setCategoryFilter] = useState<string | string[]>(() => {
+    const category = initialFilters.category ?? "";
+    return parseMultiSelectFilter(category);
+  });
   const [libraryLoaded, setLibraryLoaded] = useState(false);
   const [libraryLoadFailed, setLibraryLoadFailed] = useState(false);
   const [sortBy, setSortBy] = useState(() =>
@@ -204,11 +229,20 @@ export default function BookLibrary({
   useEffect(() => {
     if (isSearch) return;
     const params = new URLSearchParams();
+    const shelfValue = Array.isArray(shelfFilter)
+      ? serializeMultiSelectFilter(shelfFilter)
+      : shelfFilter;
+    const authorValue = Array.isArray(authorFilter)
+      ? serializeMultiSelectFilter(authorFilter)
+      : authorFilter;
+    const categoryValue = Array.isArray(categoryFilter)
+      ? serializeMultiSelectFilter(categoryFilter)
+      : categoryFilter;
     const values: [string, string, string][] = [
       ["q", libraryQuery.trim(), ""],
-      ["status", shelfFilter, ALL_SHELVES],
-      ["author", authorFilter, ""],
-      ["category", categoryFilter, ""],
+      ["status", shelfValue, ""],
+      ["author", authorValue, ""],
+      ["category", categoryValue, ""],
       ["collection", collectionFilter, ""],
       ["sort", sortBy, LibrarySort.Title],
     ];
@@ -242,9 +276,9 @@ export default function BookLibrary({
     function syncFromUrl() {
       const params = new URLSearchParams(window.location.search);
       setLibraryQuery(params.get("q") ?? "");
-      setShelfFilter(toShelfFilter(params.get("status")));
-      setAuthorFilter(params.get("author") ?? "");
-      setCategoryFilter(params.get("category") ?? "");
+      setShelfFilter(parseMultiSelectFilter(params.get("status") ?? ""));
+      setAuthorFilter(parseMultiSelectFilter(params.get("author") ?? ""));
+      setCategoryFilter(parseMultiSelectFilter(params.get("category") ?? ""));
       setCollectionFilter(params.get("collection") ?? "");
       setSortBy(toLibrarySort(params.get("sort")));
     }
@@ -269,17 +303,20 @@ export default function BookLibrary({
       return (
         matchesQuery &&
         (ignore === LibraryFilterKey.Shelf ||
-          shelfFilter === ALL_SHELVES ||
-          entry.status === shelfFilter) &&
+          !shelfFilter ||
+          Array.isArray(shelfFilter) && shelfFilter.length === 0 ||
+          filterMatchesValue(shelfFilter, entry.status)) &&
         (ignore === LibraryFilterKey.Collection ||
           !collectionFilter ||
           entry.collectionIds.includes(collectionFilter)) &&
         (ignore === LibraryFilterKey.Author ||
           !authorFilter ||
-          entry.book.authors.includes(authorFilter)) &&
+          Array.isArray(authorFilter) && authorFilter.length === 0 ||
+          filterMatchesValue(authorFilter, entry.book.authors)) &&
         (ignore === LibraryFilterKey.Category ||
           !categoryFilter ||
-          entry.book.categories.includes(categoryFilter))
+          Array.isArray(categoryFilter) && categoryFilter.length === 0 ||
+          filterMatchesValue(categoryFilter, entry.book.categories))
       );
     },
     [authorFilter, categoryFilter, collectionFilter, libraryQuery, shelfFilter],
@@ -308,10 +345,12 @@ export default function BookLibrary({
   // Each facet lists only values present in books matching the *other* filters.
   const facetEntries = (facet: FacetKey) =>
     entries.filter((entry) => matchesFilters(entry, facet));
-  const uniqueSorted = (values: string[], selected: string) =>
-    [...new Set(selected ? [...values, selected] : values)].sort(
+  const uniqueSorted = (values: string[], selected: string | string[]) => {
+    const selectedArray = Array.isArray(selected) ? selected : (selected ? [selected] : []);
+    return [...new Set([...values, ...selectedArray])].sort(
       (first, second) => first.localeCompare(second),
     );
+  };
 
   const shelfEntries = facetEntries(LibraryFilterKey.Shelf);
   const authors = uniqueSorted(
@@ -331,29 +370,38 @@ export default function BookLibrary({
       (entry) => entry.collectionIds,
     ),
   );
-  const statusOptions = [
-    { value: ALL_SHELVES, label: `${t("allBooks")} (${shelfEntries.length})` },
-    ...SHELVES.map((shelf) => ({
-      value: shelf,
-      label: `${shelfNames[shelf]} (${shelfEntries.filter((entry) => entry.status === shelf).length})`,
-    })),
-  ];
-  const authorOptions = [
-    { value: "", label: t("allAuthors") },
-    ...authors.map((author) => ({ value: author, label: author })),
-  ];
-  const categoryOptions = [
-    { value: "", label: t("allCategories") },
-    ...categories.map((category) => ({ value: category, label: category })),
-  ];
-  const collectionOptions = toCollectionOptions(
-    collections.filter(
+  const statusOptions = SHELVES.map((shelf) => ({
+    value: shelf,
+    label: shelfNames[shelf],
+    count: shelfEntries.filter((entry) => entry.status === shelf).length,
+  }));
+  const authorOptions = authors.map((author) => ({
+    value: author,
+    label: author,
+    count: facetEntries(LibraryFilterKey.Author).filter((entry) =>
+      entry.book.authors.includes(author),
+    ).length,
+  }));
+  const categoryOptions = categories.map((category) => ({
+    value: category,
+    label: category,
+    count: facetEntries(LibraryFilterKey.Category).filter((entry) =>
+      entry.book.categories.includes(category),
+    ).length,
+  }));
+  const collectionOptions = collections
+    .filter(
       (collection) =>
         collectionIdsInUse.has(collection.id) ||
         collection.id === collectionFilter,
-    ),
-    t("allCollections"),
-  );
+    )
+    .map((collection) => ({
+      value: collection.id,
+      label: collection.name,
+      count: facetEntries(LibraryFilterKey.Collection).filter((entry) =>
+        entry.collectionIds.includes(collection.id),
+      ).length,
+    }));
   const sortOptions = [
     { value: LibrarySort.Title, label: t("sortTitle") },
     { value: LibrarySort.Author, label: t("sortAuthor") },
@@ -371,34 +419,100 @@ export default function BookLibrary({
   };
   const filterSections: LibraryFilterSection[] = [
     { key: LibraryFilterKey.SortBy, label: t("sortBy"), options: sortOptions },
-    { key: LibraryFilterKey.Shelf, label: t("status"), options: statusOptions },
+    {
+      key: LibraryFilterKey.Shelf,
+      label: t("status"),
+      options: statusOptions,
+      multiSelect: true,
+    },
     {
       key: LibraryFilterKey.Author,
       label: t("author"),
       options: authorOptions,
+      multiSelect: true,
     },
     {
       key: LibraryFilterKey.Category,
       label: t("categories"),
       options: categoryOptions,
+      multiSelect: true,
     },
     {
       key: LibraryFilterKey.Collection,
       label: t("collection"),
       options: collectionOptions,
+      multiSelect: true,
     },
   ];
 
   function applyFilters(values: LibraryFilterValues) {
-    setShelfFilter(toShelfFilter(values[LibraryFilterKey.Shelf]));
-    setAuthorFilter(values[LibraryFilterKey.Author]);
-    setCategoryFilter(values[LibraryFilterKey.Category]);
-    setCollectionFilter(values[LibraryFilterKey.Collection]);
-    setSortBy(toLibrarySort(values[LibraryFilterKey.SortBy]));
+    const shelfValue = values[LibraryFilterKey.Shelf];
+    const authorValue = values[LibraryFilterKey.Author];
+    const categoryValue = values[LibraryFilterKey.Category];
+    const collectionValue = values[LibraryFilterKey.Collection];
+
+    setShelfFilter(Array.isArray(shelfValue) ? shelfValue : parseMultiSelectFilter(String(shelfValue)));
+    setAuthorFilter(Array.isArray(authorValue) ? authorValue : parseMultiSelectFilter(String(authorValue)));
+    setCategoryFilter(Array.isArray(categoryValue) ? categoryValue : parseMultiSelectFilter(String(categoryValue)));
+    setCollectionFilter(Array.isArray(collectionValue) ? serializeMultiSelectFilter(collectionValue) : String(collectionValue));
+    setSortBy(toLibrarySort(String(values[LibraryFilterKey.SortBy])));
+  }
+
+  function getFilteredResultCount(filterValues: LibraryFilterValues): number {
+    const shelfFilterValue = Array.isArray(filterValues[LibraryFilterKey.Shelf])
+      ? filterValues[LibraryFilterKey.Shelf]
+      : parseMultiSelectFilter(String(filterValues[LibraryFilterKey.Shelf]));
+    const authorFilterValue = Array.isArray(filterValues[LibraryFilterKey.Author])
+      ? filterValues[LibraryFilterKey.Author]
+      : parseMultiSelectFilter(String(filterValues[LibraryFilterKey.Author]));
+    const categoryFilterValue = Array.isArray(filterValues[LibraryFilterKey.Category])
+      ? filterValues[LibraryFilterKey.Category]
+      : parseMultiSelectFilter(String(filterValues[LibraryFilterKey.Category]));
+    const collectionFilterValue = String(filterValues[LibraryFilterKey.Collection]);
+
+    return entries.filter((entry) => {
+      const search = libraryQuery.trim().toLocaleLowerCase();
+      const isbnSearch = normalizeIsbn(libraryQuery);
+      const matchesQuery =
+        !search ||
+        [
+          entry.book.title,
+          ...entry.book.authors,
+          ...entry.book.categories,
+          entry.book.isbn ?? "",
+        ].some((value) => value.toLocaleLowerCase().includes(search)) ||
+        (!!isbnSearch &&
+          normalizeIsbn(entry.book.isbn ?? "").includes(isbnSearch));
+
+      return (
+        matchesQuery &&
+        (!shelfFilterValue ||
+          shelfFilterValue.length === 0 ||
+          filterMatchesValue(shelfFilterValue, entry.status)) &&
+        (!collectionFilterValue ||
+          entry.collectionIds.includes(collectionFilterValue)) &&
+        (!authorFilterValue ||
+          authorFilterValue.length === 0 ||
+          filterMatchesValue(authorFilterValue, entry.book.authors)) &&
+        (!categoryFilterValue ||
+          categoryFilterValue.length === 0 ||
+          filterMatchesValue(categoryFilterValue, entry.book.categories))
+      );
+    }).length;
   }
 
   function removeFilter(key: LibraryFilterKey) {
     applyFilters({ ...filterValues, [key]: filterDefaults[key] });
+  }
+
+  function removeFilterValue(key: LibraryFilterKey, value: string) {
+    const currentValue = filterValues[key];
+    const values = parseMultiSelectFilter(currentValue as string | string[]);
+    const newValues = values.filter((v) => v !== value);
+    applyFilters({
+      ...filterValues,
+      [key]: serializeMultiSelectFilter(newValues),
+    });
   }
 
   function isInLibrary(book: NewBook) {
@@ -795,12 +909,15 @@ export default function BookLibrary({
                   defaults={filterDefaults}
                   sections={filterSections}
                   onApply={applyFilters}
+                  resultCount={visibleEntries.length}
+                  getResultCount={getFilteredResultCount}
                 />
                 <SelectedFiltersPills
                   values={filterValues}
                   defaults={filterDefaults}
                   sections={filterSections}
                   onRemoveFilter={removeFilter}
+                  onRemoveFilterValue={removeFilterValue}
                   onClearAll={() => applyFilters(filterDefaults)}
                 />
                 {!libraryLoaded ? (

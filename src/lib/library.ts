@@ -26,7 +26,7 @@ export enum LibraryFilterKey {
 export type FacetKey = Exclude<LibraryFilterKey, LibraryFilterKey.SortBy>;
 
 export const ALL_SHELVES = "all";
-export type ShelfFilter = Shelf | typeof ALL_SHELVES;
+export type ShelfFilter = Shelf[] | string | string[];
 
 export function toShelfFilter(value: unknown): ShelfFilter {
   return isEnumValue(Shelf, value) ? value : ALL_SHELVES;

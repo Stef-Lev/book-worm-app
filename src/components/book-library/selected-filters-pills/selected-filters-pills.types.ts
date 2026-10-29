@@ -6,5 +6,6 @@ export type SelectedFiltersPillsProps = {
   defaults: LibraryFilterValues;
   sections: readonly LibraryFilterSection[];
   onRemoveFilter: (key: LibraryFilterKey) => void;
+  onRemoveFilterValue?: (key: LibraryFilterKey, value: string) => void;
   onClearAll: () => void;
 };

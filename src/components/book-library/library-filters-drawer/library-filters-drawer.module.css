@@ -155,6 +155,19 @@
   border-block-start: 1px solid var(--color-border);
 }
 
+.resultCount {
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: var(--space-5);
+  block-size: var(--space-5);
+  padding-inline: var(--space-1);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+}
+
 @media (--lg) {
   .pills {
     display: none;

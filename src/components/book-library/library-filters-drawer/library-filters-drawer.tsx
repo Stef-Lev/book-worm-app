@@ -13,12 +13,21 @@ import { LibraryFilterKey } from "@/lib/library";
 import type { LibraryFiltersDrawerProps } from "./library-filters-drawer.types";
 import styles from "./library-filters-drawer.module.css";
 
+function filterValuesEqual(a: string | string[], b: string | string[]): boolean {
+  if (Array.isArray(a) && Array.isArray(b)) {
+    return a.length === b.length && a.every((val, idx) => val === b[idx]);
+  }
+  return a === b;
+}
+
 export default function LibraryFiltersDrawer({
   values,
   defaults,
   sections,
   onApply,
   disabled,
+  resultCount,
+  getResultCount,
 }: LibraryFiltersDrawerProps) {
   const t = useTranslations("libraryWorkspace");
   const [open, setOpen] = useState(false);
@@ -27,10 +36,12 @@ export default function LibraryFiltersDrawer({
   );
   const [draft, setDraft] = useState(values);
 
+  const draftResultCount = getResultCount ? getResultCount(draft) : resultCount;
+
   const activeFilterCount = sections.filter(
     (section) =>
       section.key !== LibraryFilterKey.SortBy &&
-      values[section.key] !== defaults[section.key],
+      !filterValuesEqual(values[section.key], defaults[section.key]),
   ).length;
   const sortLabel = sections
     .find((section) => section.key === LibraryFilterKey.SortBy)
@@ -118,7 +129,7 @@ export default function LibraryFiltersDrawer({
                     {section.key === LibraryFilterKey.SortBy ? (
                       <ArrowDownUp aria-hidden="true" />
                     ) : (
-                      draft[section.key] !== defaults[section.key] && (
+                      !filterValuesEqual(draft[section.key], defaults[section.key]) && (
                         <span className={styles.dot} aria-hidden="true" />
                       )
                     )}
@@ -156,6 +167,9 @@ export default function LibraryFiltersDrawer({
                 }}
               >
                 {t("apply")}
+                {draftResultCount !== undefined && (
+                  <span className={styles.resultCount}>{draftResultCount}</span>
+                )}
               </Button>
             </div>
           </Dialog.Content>

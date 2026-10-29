@@ -2,7 +2,7 @@ import type { LibraryFilterSection } from "@/components/book-library/library-fil
 
 export type FilterOptionsProps = {
   section: LibraryFilterSection;
-  value: string;
-  onValueChange: (value: string) => void;
+  value: string | string[];
+  onValueChange: (value: string | string[]) => void;
   hideLabel?: boolean;
 };

@@ -1,10 +1,15 @@
 "use client";
 
-import { X } from "lucide-react";
+import { Trash2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { LibraryFilterKey } from "@/lib/library";
 import type { SelectedFiltersPillsProps } from "./selected-filters-pills.types";
 import styles from "./selected-filters-pills.module.css";
+
+function parseMultiSelectValue(value: string | string[]): string[] {
+  if (Array.isArray(value)) return value;
+  return value ? value.split(",").filter(Boolean) : [];
+}
 
 export default function SelectedFiltersPills({
   values,
@@ -12,6 +17,7 @@ export default function SelectedFiltersPills({
   sections,
   onRemoveFilter,
   onClearAll,
+  onRemoveFilterValue,
 }: SelectedFiltersPillsProps) {
   const t = useTranslations("libraryWorkspace");
 
@@ -53,10 +59,40 @@ export default function SelectedFiltersPills({
           </div>
         )}
         {activeFilters.map((section) => {
-          const option = section.options.find(
-            (opt) => String(opt.value) === values[section.key],
+          const value = values[section.key];
+          const selectedValues = parseMultiSelectValue(
+            value as string | string[],
           );
-          const label = option?.label || values[section.key];
+
+          if (section.multiSelect) {
+            return selectedValues.map((val) => {
+              const option = section.options.find(
+                (opt) => String(opt.value) === val,
+              );
+              const label = option?.label || val;
+              return (
+                <div key={`${section.key}-${val}`} className={styles.pill}>
+                  <span>{label}</span>
+                  <button
+                    type="button"
+                    className={styles.remove}
+                    onClick={() =>
+                      onRemoveFilterValue?.(section.key, val) ||
+                      onRemoveFilter(section.key)
+                    }
+                    aria-label={`${t("remove")}: ${label}`}
+                  >
+                    <X aria-hidden="true" />
+                  </button>
+                </div>
+              );
+            });
+          }
+
+          const option = section.options.find(
+            (opt) => String(opt.value) === value,
+          );
+          const label = option?.label || value;
           return (
             <div key={section.key} className={styles.pill}>
               <span>{label}</span>
@@ -77,7 +113,7 @@ export default function SelectedFiltersPills({
           onClick={onClearAll}
           aria-label={t("clearFilters")}
         >
-          <X aria-hidden="true" />
+          <Trash2 aria-hidden="true" width="14" />
           <span>{t("clearFilters")}</span>
         </button>
       </div>

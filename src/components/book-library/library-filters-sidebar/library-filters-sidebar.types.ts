@@ -8,6 +8,6 @@ export type LibraryFiltersSidebarProps = {
   values: LibraryFilterValues;
   defaults: LibraryFilterValues;
   sections: readonly LibraryFilterSection[];
-  onChange: (key: LibraryFilterKey, value: string) => void;
+  onChange: (key: LibraryFilterKey, value: string | string[]) => void;
   onClear: () => void;
 };
