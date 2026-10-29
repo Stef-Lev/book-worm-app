@@ -2,7 +2,6 @@
 
 import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import Button from "@/components/button/button";
 import { LibraryFilterKey } from "@/lib/library";
 import type { SelectedFiltersPillsProps } from "./selected-filters-pills.types";
 import styles from "./selected-filters-pills.module.css";
@@ -72,14 +71,16 @@ export default function SelectedFiltersPills({
             </div>
           );
         })}
+        <button
+          type="button"
+          className={styles.pill}
+          onClick={onClearAll}
+          aria-label={t("clearFilters")}
+        >
+          <X aria-hidden="true" />
+          <span>{t("clearFilters")}</span>
+        </button>
       </div>
-      <Button
-        className={styles.clearButton}
-        variant="secondary"
-        onClick={onClearAll}
-      >
-        {t("clearFilters")}
-      </Button>
     </div>
   );
 }

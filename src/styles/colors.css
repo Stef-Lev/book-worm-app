@@ -53,6 +53,7 @@
   --color-focus: var(--color-teal-500);
   --color-danger: var(--color-red-600);
   --color-success: var(--color-teal-600);
+  --color-pill-bg: var(--color-teal-100);
 }
 
 :root[data-theme="light"] {
@@ -73,6 +74,7 @@
   --color-focus: var(--color-teal-300);
   --color-danger: var(--color-red-400);
   --color-success: var(--color-teal-300);
+  --color-pill-bg: var(--color-teal-800);
   color-scheme: dark;
 }
 
@@ -91,6 +93,7 @@
     --color-focus: var(--color-teal-300);
     --color-danger: var(--color-red-400);
     --color-success: var(--color-teal-300);
+    --color-pill-bg: var(--color-teal-800);
     color-scheme: dark;
   }
 }
