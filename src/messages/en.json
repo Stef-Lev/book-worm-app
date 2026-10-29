@@ -195,7 +195,7 @@
     "genericError": "Something went wrong. Please try again.",
     "addBooks": "Find and add books",
     "searchBooks": "Search by title, author, or ISBN",
-    "searchPlaceholder": "Search Open Library...",
+    "searchPlaceholder": "Search books...",
     "searchLibrary": "Search your library",
     "librarySearchPlaceholder": "Title, author, or ISBN...",
     "filterAuthor": "Filter by author",
