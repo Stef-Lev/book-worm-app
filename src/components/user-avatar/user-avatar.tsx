@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import Link from "@/components/navigation-link/navigation-link";
@@ -18,26 +18,41 @@ export default function UserAvatar({
 }: UserAvatarProps) {
   const { data: session } = useSession();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const fetchedRef = useRef(false);
+  const userIdRef = useRef<string | null>(null);
 
   const displayName = userName || session?.user?.name;
 
   useEffect(() => {
+    const userId = session?.user?.id || userEmail;
+
+    if (!userId || userIdRef.current === userId) {
+      return;
+    }
+
+    if (fetchedRef.current && userIdRef.current === userId) {
+      return;
+    }
+
+    userIdRef.current = userId;
+    fetchedRef.current = true;
+
     const fetchAvatar = async () => {
       try {
         const res = await fetch("/api/profile/avatar");
         if (res.ok) {
           const blob = await res.blob();
           setAvatarUrl(URL.createObjectURL(blob));
+        } else if (res.status !== 404) {
+          console.error("Failed to fetch avatar: HTTP", res.status);
         }
       } catch (error) {
         console.error("Failed to fetch avatar:", error);
       }
     };
 
-    if (session?.user || userEmail) {
-      fetchAvatar();
-    }
-  }, [session?.user, userEmail]);
+    fetchAvatar();
+  }, [session?.user?.id, userEmail]);
 
   const initials =
     displayName
