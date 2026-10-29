@@ -52,6 +52,41 @@ function isGreekText(text: string): boolean {
 }
 
 /**
+ * Extract and normalize ISBN (remove hyphens, spaces, etc.)
+ */
+function normalizeIsbn(isbn: string): string {
+  return isbn
+    .replace(/^ISBN(?:-1[03])?\s*:?\s*/i, "")
+    .replace(/[\s\u2010-\u2015-]/g, "")
+    .toUpperCase();
+}
+
+/**
+ * Detect if an ISBN is from Greece based on country code
+ * 
+ * ISBN country codes:
+ * - ISBN-10 starting with 960 = Greece (total 10 digits)
+ * - ISBN-13 starting with 978960 or 97910 = Greece (total 13 digits when normalized)
+ */
+export function isGreekIsbn(isbn: string): boolean {
+  const normalized = normalizeIsbn(isbn);
+
+  if (normalized.length === 10) {
+    // ISBN-10: Greece is 960 (followed by 7 more digits)
+    return /^960\d{7}$/.test(normalized);
+  }
+
+  if (normalized.length === 13) {
+    // ISBN-13: Greece prefixes
+    // - 978960 (most common Greek publishers)
+    // - 97910 (some Greek publishers)
+    return /^978960/.test(normalized) || /^97910/.test(normalized);
+  }
+
+  return false;
+}
+
+/**
  * Search BookShark for Greek books
  * BookShark is specialized for Greek language books and works without an API key
  * Gracefully degrades if BookShark is unavailable

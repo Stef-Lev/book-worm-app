@@ -1,10 +1,22 @@
 import { auth } from "@/auth";
 import { searchOpenLibrary } from "@/lib/open-library";
-import { searchBookshark, isProbablyGreekSearch } from "@/lib/bookshark";
+import { searchBookshark, isProbablyGreekSearch, isGreekIsbn } from "@/lib/bookshark";
 import type { CatalogBook as OpenLibraryBook } from "@/lib/open-library";
 import type { CatalogBook as BooksharkBook } from "@/lib/bookshark";
 
 type SearchResult = OpenLibraryBook | BooksharkBook;
+
+function normalizeIsbn(isbn: string): string {
+  return isbn
+    .replace(/^ISBN(?:-1[03])?\s*:?\s*/i, "")
+    .replace(/[\s\u2010-\u2015-]/g, "")
+    .toUpperCase();
+}
+
+function isValidIsbn(isbn: string): boolean {
+  const normalized = normalizeIsbn(isbn);
+  return /^(?:\d{9}[\dX]|\d{13})$/.test(normalized);
+}
 
 export async function GET(request: Request) {
   const session = await auth();
@@ -18,9 +30,13 @@ export async function GET(request: Request) {
   }
 
   try {
-    const isGreek = isProbablyGreekSearch(query);
+    // Check if query is a valid ISBN
+    const isIsbn = isValidIsbn(query);
+    const isGreekByIsbn = isIsbn && isGreekIsbn(query);
+    const isGreekByText = !isIsbn && isProbablyGreekSearch(query);
+    const isGreek = isGreekByIsbn || isGreekByText;
 
-    // For Greek searches, prioritize BookShark; for others, prioritize Open Library
+    // For Greek searches/ISBNs, prioritize BookShark; otherwise prioritize Open Library
     // We search both in parallel and merge results, deduplicating by ISBN
     const [results1, results2] = isGreek
       ? await Promise.allSettled([
