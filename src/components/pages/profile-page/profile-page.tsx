@@ -8,6 +8,7 @@ import { Camera, Trash2, Eye, EyeOff, LogOut } from "lucide-react";
 import Button from "@/components/button/button";
 import TextInput from "@/components/text-input/text-input";
 import FeedbackMessage from "@/components/feedback-message/feedback-message";
+import { useAvatar } from "@/components/avatar-provider/avatar-provider";
 import styles from "./profile-page.module.css";
 
 interface ProfileData {
@@ -20,6 +21,7 @@ interface ProfileData {
 export default function ProfilePage() {
   const t = useTranslations("pages.profile");
   const { data: session, update: updateSession } = useSession();
+  const { refreshAvatar } = useAvatar();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [profile, setProfile] = useState<ProfileData | null>(null);
@@ -101,6 +103,7 @@ export default function ProfilePage() {
         if (profile) {
           setProfile({ ...profile, hasAvatar: true });
         }
+        await refreshAvatar();
         setMessage({ type: "success", text: t("successAvatarUploaded") });
       } else {
         const data = await res.json();
@@ -130,6 +133,7 @@ export default function ProfilePage() {
         if (profile) {
           setProfile({ ...profile, hasAvatar: false });
         }
+        await refreshAvatar();
         setMessage({ type: "success", text: t("successAvatarRemoved") });
       } else {
         setMessage({ type: "error", text: t("errorRemovingAvatar") });

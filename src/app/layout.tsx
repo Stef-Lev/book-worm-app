@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { SessionProvider } from "next-auth/react";
 import { Geist, Geist_Mono } from "next/font/google";
 import RouteLoading from "@/components/route-loading/route-loading";
+import { AvatarProvider } from "@/components/avatar-provider/avatar-provider";
 import ToastProvider from "@/components/toast-provider/toast-provider";
 import { DEFAULT_LOCALE, LOCALE_COOKIE, Locale } from "@/i18n/config";
 import { THEME_COOKIE, Theme } from "@/lib/preferences";
@@ -42,9 +43,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body>
         <Suspense fallback={<RouteLoading />}>
           <SessionProvider>
-            <NextIntlClientProvider>
-              <ToastProvider>{children}</ToastProvider>
-            </NextIntlClientProvider>
+            <AvatarProvider>
+              <NextIntlClientProvider>
+                <ToastProvider>{children}</ToastProvider>
+              </NextIntlClientProvider>
+            </AvatarProvider>
           </SessionProvider>
         </Suspense>
       </body>
