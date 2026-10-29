@@ -24,8 +24,6 @@ export const metadata: Metadata = {
 };
 
 // @TODO: Create functionality for forgot password
-// @TODO: Scrape public to create an API for greek books, check bookshark
-// @TODO: Clean results when the input is cleared
 // @TODO: Analytics, show percentage of whole library completed
 // @TODO: Edit book details functionality
 // @TODO: Implement user profile management
