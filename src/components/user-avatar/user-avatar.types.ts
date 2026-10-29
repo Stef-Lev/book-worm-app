@@ -6,4 +6,6 @@ export type UserAvatarProps = {
   href?: string;
   onClick?: () => void;
   children?: ReactNode;
+  userName?: string | null;
+  userEmail?: string | null;
 };

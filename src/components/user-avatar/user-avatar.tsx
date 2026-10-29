@@ -13,9 +13,13 @@ export default function UserAvatar({
   href = "/profile",
   onClick,
   children,
+  userName,
+  userEmail,
 }: UserAvatarProps) {
   const { data: session } = useSession();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  const displayName = userName || session?.user?.name;
 
   useEffect(() => {
     const fetchAvatar = async () => {
@@ -30,13 +34,13 @@ export default function UserAvatar({
       }
     };
 
-    if (session?.user) {
+    if (session?.user || userEmail) {
       fetchAvatar();
     }
-  }, [session?.user]);
+  }, [session?.user, userEmail]);
 
   const initials =
-    session?.user?.name
+    displayName
       ?.split(" ")
       .map((part) => part.charAt(0).toUpperCase())
       .join("")
@@ -45,12 +49,12 @@ export default function UserAvatar({
   const avatarContent = (
     <div
       className={`${styles.avatar} ${styles[size]}`}
-      title={session?.user?.name || "User"}
+      title={displayName || "User"}
     >
       {avatarUrl ? (
         <Image
           src={avatarUrl}
-          alt={session?.user?.name || "User avatar"}
+          alt={displayName || "User avatar"}
           className={styles.image}
           width={48}
           height={48}

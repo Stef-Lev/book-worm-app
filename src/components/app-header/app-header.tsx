@@ -1,6 +1,7 @@
 import Link from "@/components/navigation-link/navigation-link";
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
+import { auth } from "@/auth";
 import UserAvatar from "@/components/user-avatar/user-avatar";
 import PreferencesSwitcher from "@/components/preferences-switcher/preferences-switcher";
 import MobileNavigation from "@/components/app-header/mobile-navigation/mobile-navigation";
@@ -9,6 +10,8 @@ import type { AppHeaderProps } from "./app-header.types";
 
 export default async function AppHeader({ theme }: AppHeaderProps) {
   const t = await getTranslations("nav");
+  const session = await auth();
+
   const links = [
     { href: "/library", label: t("library") },
     { href: "/search", label: t("searchLabel") },
@@ -36,11 +39,19 @@ export default async function AppHeader({ theme }: AppHeaderProps) {
       </nav>
       <MobileNavigation links={links}>
         <PreferencesSwitcher theme={theme} />
-        <UserAvatar size="medium" />
+        <UserAvatar 
+          size="medium"
+          userName={session?.user?.name}
+          userEmail={session?.user?.email}
+        />
       </MobileNavigation>
       <div className={styles.account}>
         <PreferencesSwitcher theme={theme} />
-        <UserAvatar size="medium" />
+        <UserAvatar 
+          size="medium"
+          userName={session?.user?.name}
+          userEmail={session?.user?.email}
+        />
       </div>
     </header>
   );
