@@ -76,6 +76,7 @@ export async function GET() {
   return Response.json({
     entries: entries.map((entry) => {
       const book = entry.bookId as unknown as Record<string, unknown>;
+      const overrides = (entry as unknown as Record<string, unknown>).bookOverrides as Record<string, unknown> | undefined;
       return {
         id: entry._id.toString(),
         status: entry.status,
@@ -89,14 +90,15 @@ export async function GET() {
           id: String(book._id),
           source: book.source,
           externalId: book.externalId,
-          title: book.title,
-          authors: book.authors,
-          isbn: book.isbn,
-          pageCount: book.pageCount,
+          title: overrides?.title || book.title,
+          authors: overrides?.authors || book.authors,
+          isbn: overrides?.isbn || book.isbn,
+          pageCount: overrides?.pageCount ?? book.pageCount,
           categories: book.categories,
-          coverUrl: book.coverUrl,
+          coverUrl: overrides?.coverUrl || book.coverUrl,
           publishedDate: book.publishedDate,
         },
+        bookOverrides: overrides || {},
       };
     }),
     collections: collections.map(toCollectionJson),

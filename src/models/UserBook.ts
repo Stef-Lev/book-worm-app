@@ -32,6 +32,13 @@ const userBookSchema = new mongoose.Schema(
     },
     review: { type: String, trim: true },
     tags: [{ type: String, trim: true }],
+    bookOverrides: {
+      title: { type: String, trim: true },
+      authors: [{ type: String, trim: true }],
+      isbn: { type: String, trim: true },
+      pageCount: { type: Number, min: 0 },
+      coverUrl: { type: String },
+    },
   },
   { timestamps: true },
 );

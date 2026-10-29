@@ -208,6 +208,13 @@
     "removeTitle": "Permanently remove this book?",
     "confirmRemove": "This will permanently remove “{title}” from your library, including your reading progress, dates, rating, review, and collection assignments. This cannot be undone.",
     "bookRemoved": "Book removed from your library.",
+    "editBookDetails": "Edit book details",
+    "title": "Title",
+    "authors": "Authors",
+    "pageCount": "Page count",
+    "coverUrl": "Cover URL",
+    "addAuthor": "Add author",
+    "close": "Close",
     "changesSaved": "Changes saved.",
     "emptyLibrary": "Your library is empty.",
     "noBooksMatch": "No books match these filters."

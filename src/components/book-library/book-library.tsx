@@ -557,6 +557,14 @@ export default function BookLibrary({
     cancel: t("cancel"),
     saving: t("saving"),
     pages: t("pages"),
+    editBookDetails: t("editBookDetails"),
+    title: t("title"),
+    authors: t("authors"),
+    isbn: t("isbn"),
+    pageCount: t("pageCount"),
+    coverUrl: t("coverUrl"),
+    addAuthor: t("addAuthor"),
+    close: t("close"),
   };
 
   return (

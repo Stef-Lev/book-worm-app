@@ -24,6 +24,13 @@ export type BookEntryData = {
     coverUrl?: string;
     publishedDate?: string;
   };
+  bookOverrides?: {
+    title?: string;
+    authors?: string[];
+    isbn?: string;
+    pageCount?: number;
+    coverUrl?: string;
+  };
 };
 
 export type BookCollection = { id: string; name: string };
@@ -50,6 +57,14 @@ export type BookEntryProps = {
     cancel: string;
     saving: string;
     pages: string;
+    editBookDetails: string;
+    title: string;
+    authors: string;
+    isbn: string;
+    pageCount: string;
+    coverUrl: string;
+    addAuthor: string;
+    close: string;
   };
   onChange: (id: string, changes: Partial<BookEntryData>) => void;
   onSave: (entry: BookEntryData) => void;

@@ -3,9 +3,11 @@
 import styles from "./book-entry.module.css";
 import { Dialog } from "@ark-ui/react/dialog";
 import DialogOverlay from "@/components/dialog-overlay/dialog-overlay";
-import { AlertTriangle, Save, Trash2 } from "lucide-react";
+import BookDetailsDialog from "@/components/book-entry/book-details-dialog/book-details-dialog";
+import { AlertTriangle, Save, Trash2, Edit } from "lucide-react";
 import Dropdown from "@/components/dropdown/dropdown";
 import Button from "@/components/button/button";
+import IconButton from "@/components/icon-button/icon-button";
 import BookCover from "@/components/book-cover/book-cover";
 import DateInput from "@/components/date-input/date-input";
 import Textarea from "@/components/textarea/textarea";
@@ -55,7 +57,28 @@ export default function BookEntry({
       <div className={styles.header}>
         <BookCover className={styles.cover} src={entry.book.coverUrl} />
         <div className={styles.details}>
-          <h3 className={styles.title}>{entry.book.title}</h3>
+          <div className={styles.titleRow}>
+            <h3 className={styles.title}>{entry.book.title}</h3>
+            <BookDetailsDialog
+              entry={entry}
+              labels={{
+                editBookDetails: labels.editBookDetails,
+                title: labels.title,
+                authors: labels.authors,
+                isbn: labels.isbn,
+                pageCount: labels.pageCount,
+                coverUrl: labels.coverUrl,
+                addAuthor: labels.addAuthor,
+                pages: labels.pages,
+                save: labels.save,
+                cancel: labels.cancel,
+                close: labels.close,
+              }}
+              onSave={(overrides) => update({ bookOverrides: overrides })}
+              busy={busy}
+              asIconButton
+            />
+          </div>
           <p className={styles.muted}>
             {entry.book.authors.length
               ? entry.book.authors.join(", ")

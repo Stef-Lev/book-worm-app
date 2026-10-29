@@ -79,6 +79,69 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
     set.collectionIds = ids;
   }
+  if (updates.bookOverrides !== undefined) {
+    const overrides = updates.bookOverrides;
+    if (!overrides || typeof overrides !== "object") {
+      return jsonError("Invalid book overrides.", 400);
+    }
+    const overridesObj = overrides as Record<string, unknown>;
+    const validated: Record<string, unknown> = {};
+    
+    if (overridesObj.title !== undefined) {
+      if (typeof overridesObj.title !== "string" || overridesObj.title.trim().length === 0 || overridesObj.title.length > 300) {
+        return jsonError("Title must be between 1 and 300 characters.", 400);
+      }
+      validated.title = overridesObj.title.trim();
+    }
+    
+    if (overridesObj.authors !== undefined) {
+      if (!Array.isArray(overridesObj.authors) || overridesObj.authors.length > 20 ||
+          !overridesObj.authors.every((a) => typeof a === "string" && a.length <= 200)) {
+        return jsonError("Authors must be an array of up to 20 strings, each 200 characters or fewer.", 400);
+      }
+      validated.authors = overridesObj.authors.map((a) => String(a).trim());
+    }
+    
+    if (overridesObj.isbn !== undefined) {
+      if (typeof overridesObj.isbn !== "string" || overridesObj.isbn.length > 20) {
+        return jsonError("ISBN must be 20 characters or fewer.", 400);
+      }
+      validated.isbn = overridesObj.isbn.trim() || undefined;
+    }
+    
+    if (overridesObj.pageCount !== undefined) {
+      if (overridesObj.pageCount !== null && 
+          (typeof overridesObj.pageCount !== "number" || 
+           !Number.isInteger(overridesObj.pageCount) || 
+           overridesObj.pageCount < 0)) {
+        return jsonError("Page count must be a non-negative integer.", 400);
+      }
+      validated.pageCount = overridesObj.pageCount;
+    }
+    
+    if (overridesObj.coverUrl !== undefined) {
+      if (overridesObj.coverUrl === null || overridesObj.coverUrl === "") {
+        validated.coverUrl = undefined;
+      } else if (typeof overridesObj.coverUrl === "string") {
+        if (overridesObj.coverUrl.length > 2048) {
+          return jsonError("Cover URL must be 2048 characters or fewer.", 400);
+        }
+        try {
+          const url = new URL(overridesObj.coverUrl);
+          if (url.protocol !== "https:" && url.protocol !== "http:") {
+            return jsonError("Cover URL must be an HTTP or HTTPS URL.", 400);
+          }
+          validated.coverUrl = url.toString();
+        } catch {
+          return jsonError("Invalid URL format for cover.", 400);
+        }
+      } else {
+        return jsonError("Cover URL must be a string.", 400);
+      }
+    }
+    
+    set["bookOverrides"] = validated;
+  }
   if (!Object.keys(set).length) {
     return jsonError("No changes provided.", 400);
   }
