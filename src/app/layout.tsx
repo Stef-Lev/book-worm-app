@@ -24,7 +24,6 @@ export const metadata: Metadata = {
 };
 
 // @TODO: Create functionality for forgot password
-// @TODO: Analytics, show percentage of whole library completed
 // @TODO: Edit book details functionality
 // @TODO: Implement user profile management
 // @TODO: Add hover cursor pointer where needed

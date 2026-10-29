@@ -8,11 +8,12 @@ import BookCover from "@/components/book-cover/book-cover";
 import StarRating from "@/components/star-rating/star-rating";
 import YearFilter from "@/components/pages/analytics-page/year-filter/year-filter";
 import ReadingOverTime from "@/components/pages/analytics-page/reading-over-time/reading-over-time";
-import CatalogFilter from "@/components/pages/analytics-page/catalog-filter/catalog-filter";
+import CollectionFilter from "@/components/pages/analytics-page/collection-filter/collection-filter";
 import { connectDB } from "@/lib/mongodb";
 import { SHELVES, Shelf } from "@/lib/shelves";
 import "@/models/Book";
 import UserBook from "@/models/UserBook";
+import Collection from "@/models/Collection";
 import styles from "./analytics-page.module.css";
 import type { AnalyticsPageProps } from "./analytics-page.types";
 
@@ -21,7 +22,6 @@ type BookDetails = {
   authors: string[];
   pageCount: number;
   coverUrl?: string;
-  categories?: string[];
 };
 
 type YearFilter = number | "all";
@@ -63,7 +63,7 @@ export default async function AnalyticsPage({
   })
     .populate<{ bookId: BookDetails | null }>({
       path: "bookId",
-      select: "title authors pageCount coverUrl categories",
+      select: "title authors pageCount coverUrl",
     })
     .sort({ createdAt: -1 })
     .lean();
@@ -146,39 +146,30 @@ export default async function AnalyticsPage({
   const readPercentage =
     librarySize > 0 ? Math.round((shelfCounts.read / librarySize) * 100) : 0;
   
-  // Calculate catalog statistics
-  const catalogStats = new Map<string, { total: number; read: number }>();
-  for (const entry of entries) {
-    const categories = entry.bookId?.categories ?? [];
-    if (categories.length === 0) {
-      // Handle books with no categories
-      const noCategoryKey = "uncategorized";
-      const current = catalogStats.get(noCategoryKey) ?? { total: 0, read: 0 };
-      current.total++;
-      if (entry.status === Shelf.Read) {
-        current.read++;
-      }
-      catalogStats.set(noCategoryKey, current);
-    } else {
-      for (const category of categories) {
-        const current = catalogStats.get(category) ?? { total: 0, read: 0 };
-        current.total++;
-        if (entry.status === Shelf.Read) {
-          current.read++;
-        }
-        catalogStats.set(category, current);
-      }
-    }
-  }
+  // Fetch user's collections
+  const collections = await Collection.find({
+    userId: new mongoose.Types.ObjectId(userId),
+  })
+    .sort({ name: 1 })
+    .lean();
 
-  const catalogs = Array.from(catalogStats.entries())
-    .sort((a, b) => b[1].total - a[1].total)
-    .map(([name, stats]) => ({
-      name,
-      total: stats.total,
-      read: stats.read,
-      percentage: stats.total > 0 ? Math.round((stats.read / stats.total) * 100) : 0,
-    }));
+  // Calculate collection statistics
+  const collectionStats = collections.map((collection) => {
+    const booksInCollection = entries.filter((entry) =>
+      entry.collectionIds.some((id) => id.toString() === collection._id.toString()),
+    );
+    const readInCollection = booksInCollection.filter(
+      (entry) => entry.status === Shelf.Read,
+    ).length;
+    const totalInCollection = booksInCollection.length;
+    return {
+      id: collection._id.toString(),
+      name: collection.name,
+      total: totalInCollection,
+      read: readInCollection,
+      percentage: totalInCollection > 0 ? Math.round((readInCollection / totalInCollection) * 100) : 0,
+    };
+  });
 
   const currentlyReading = shelfCounts[Shelf.CurrentlyReading];
   const favorites = entries
@@ -235,7 +226,7 @@ export default async function AnalyticsPage({
         </article>
       </section>
 
-      <CatalogFilter catalogs={catalogs} />
+      <CollectionFilter collections={collectionStats} />
 
       <div className={styles.sections}>
         <section className={styles.panel} aria-labelledby="reading-over-time">
