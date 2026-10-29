@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { NextIntlClientProvider } from "next-intl";
+import { SessionProvider } from "next-auth/react";
 import { Geist, Geist_Mono } from "next/font/google";
 import RouteLoading from "@/components/route-loading/route-loading";
 import ToastProvider from "@/components/toast-provider/toast-provider";
@@ -47,9 +48,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body>
         <Suspense fallback={<RouteLoading />}>
-          <NextIntlClientProvider>
-            <ToastProvider>{children}</ToastProvider>
-          </NextIntlClientProvider>
+          <SessionProvider>
+            <NextIntlClientProvider>
+              <ToastProvider>{children}</ToastProvider>
+            </NextIntlClientProvider>
+          </SessionProvider>
         </Suspense>
       </body>
     </html>

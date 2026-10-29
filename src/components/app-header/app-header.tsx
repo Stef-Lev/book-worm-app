@@ -1,7 +1,7 @@
 import Link from "@/components/navigation-link/navigation-link";
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
-import LogoutButton from "@/components/logout-button/logout-button";
+import UserAvatar from "@/components/user-avatar/user-avatar";
 import PreferencesSwitcher from "@/components/preferences-switcher/preferences-switcher";
 import MobileNavigation from "@/components/app-header/mobile-navigation/mobile-navigation";
 import styles from "./app-header.module.css";
@@ -36,11 +36,11 @@ export default async function AppHeader({ theme }: AppHeaderProps) {
       </nav>
       <MobileNavigation links={links}>
         <PreferencesSwitcher theme={theme} />
-        <LogoutButton />
+        <UserAvatar size="medium" />
       </MobileNavigation>
       <div className={styles.account}>
         <PreferencesSwitcher theme={theme} />
-        <LogoutButton />
+        <UserAvatar size="medium" />
       </div>
     </header>
   );

@@ -1,0 +1,185 @@
+.main {
+  padding: 2rem 1rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.container h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.section {
+  border: 1px solid var(--color-border, #e0e0e0);
+  border-radius: 8px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.section h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Avatar Section */
+.avatarContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.avatarImage {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--color-border, #e0e0e0);
+}
+
+.avatarPlaceholder {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 4rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--color-border, #e0e0e0);
+}
+
+.avatarActions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.dangerButton {
+  color: var(--color-danger, #ef4444);
+}
+
+.hint {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary, #666);
+  text-align: center;
+  margin: 0;
+}
+
+/* Form Styles */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.passwordInputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.passwordInputWrapper :global(input) {
+  padding-right: 2.5rem;
+}
+
+.showPasswordButton {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-secondary, #666);
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.showPasswordButton:hover {
+  color: var(--color-text, #333);
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* Loading & Error States */
+.loading,
+.error {
+  padding: 2rem 1rem;
+  text-align: center;
+  font-size: 1.125rem;
+  color: var(--color-text-secondary, #666);
+}
+
+.error {
+  color: var(--color-danger, #ef4444);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .main {
+    padding: 1rem;
+  }
+
+  .section {
+    padding: 1.5rem;
+  }
+
+  .container h1 {
+    font-size: 1.75rem;
+  }
+
+  .section h2 {
+    font-size: 1.25rem;
+  }
+
+  .avatarImage,
+  .avatarPlaceholder {
+    width: 120px;
+    height: 120px;
+    font-size: 3rem;
+  }
+
+  .avatarActions {
+    width: 100%;
+  }
+
+  .avatarActions :global(button) {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .buttonGroup {
+    flex-direction: column;
+  }
+
+  .buttonGroup :global(button) {
+    width: 100%;
+  }
+}

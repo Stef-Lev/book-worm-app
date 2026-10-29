@@ -61,7 +61,9 @@ export default function MobileNavigation({
                 </Link>
               ))}
             </nav>
-            <div className={styles.account}>{children}</div>
+            <div className={styles.account} onClick={() => setOpen(false)}>
+              {children}
+            </div>
           </Dialog.Content>
         </Dialog.Positioner>
       </Portal>
