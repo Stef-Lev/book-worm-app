@@ -3,8 +3,11 @@
 import { useState } from "react";
 import Link from "@/components/navigation-link/navigation-link";
 import AuthPageShell from "@/components/auth-page-shell/auth-page-shell";
+import Button from "@/components/button/button";
+import TextInput from "@/components/text-input/text-input";
 import { useTranslations } from "next-intl";
 import { toast } from "react-toastify";
+import styles from "./forgot-password-page.module.css";
 
 export default function ForgotPasswordPage() {
   const t = useTranslations("pages.forgotPassword");
@@ -48,47 +51,26 @@ export default function ForgotPasswordPage() {
       }
     >
       {submitted ? (
-        <div style={{ textAlign: "center", color: "var(--color-text-secondary)" }}>
+        <div className={styles.successMessage}>
           <p>{t("checkEmail")}</p>
         </div>
       ) : (
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: "1rem" }}>
-            <label htmlFor="email" style={{ display: "block", marginBottom: "0.5rem" }}>
-              {auth("email")}
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-              style={{
-                width: "100%",
-                padding: "0.75rem",
-                border: "1px solid var(--color-border)",
-                borderRadius: "0.5rem",
-              }}
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: "100%",
-              padding: "0.75rem",
-              backgroundColor: loading ? "var(--color-text-tertiary)" : "var(--color-primary)",
-              color: "white",
-              border: "none",
-              borderRadius: "0.5rem",
-              cursor: loading ? "not-allowed" : "pointer",
-            }}
-          >
-            {loading ? t("sending") : t("submit")}
-          </button>
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <TextInput
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            autoComplete="email"
+            label={auth("email")}
+          />
+          <Button type="submit" loading={loading}>
+            {t("submit")}
+          </Button>
         </form>
       )}
     </AuthPageShell>
   );
 }
+

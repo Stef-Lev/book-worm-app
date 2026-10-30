@@ -70,7 +70,7 @@
     },
     "home": {
       "title": "Get some tea, open a book, and settle in",
-      "description": "Find a quiet spot and read at your own pace. PaperSmell takes care of the tracking, ratings, and shelves\u2014so you can just read."
+      "description": "Find a quiet spot and read at your own pace. PaperSmell takes care of the tracking, ratings, and shelves—so you can just read."
     },
     "library": {
       "title": "Library page",
@@ -92,12 +92,12 @@
       "allCollections": "All collections",
       "readingOverTime": "Reading over time",
       "yearlyCompletions": "Books finished per year",
-      "monthlyCompletions": "Books finished per month \u00b7 {period}",
+      "monthlyCompletions": "Books finished per month · {period}",
       "noCompletions": "No books finished in this period yet.",
       "periodCompletionCount": "{period}: {count} books finished",
       "invalidCompletionDates": "Across your library, {count} read books have missing or inconsistent finish dates and are excluded from time-based insights.",
       "libraryOverview": "Your library",
-      "currentShelfSnapshot": "Current shelf counts \u00b7 not filtered by year",
+      "currentShelfSnapshot": "Current shelf counts · not filtered by year",
       "libraryReadPercentage": "Library read",
       "readBooksOutOfTotal": "{read} of {total} books are on the Read shelf",
       "emptyLibrary": "Your library is empty.",
@@ -120,7 +120,8 @@
     },
     "login": {
       "title": "Log in",
-      "description": "Welcome back to PaperSmell."
+      "description": "Welcome back to PaperSmell.",
+      "forgotPassword": "Forgot password?"
     },
     "register": {
       "title": "Create account",
@@ -128,7 +129,6 @@
     },
     "profile": {
       "title": "Your Profile",
-      "loading": "Loading profile...",
       "errorLoadingProfile": "Failed to load profile",
       "errorFetchingProfile": "Failed to fetch profile information",
       "avatarSection": "Profile Picture",
@@ -241,7 +241,7 @@
     "collectionCreated": "Collection created.",
     "collectionDeleted": "Collection deleted.",
     "deleteCollection": "Delete {name}",
-    "confirmDeleteCollection": "Delete the collection \u201c{name}\u201d? Books will remain in your library.",
+    "confirmDeleteCollection": "Delete the collection “{name}”? Books will remain in your library.",
     "yourLibrary": "Your books",
     "allBooks": "All books",
     "shelfToRead": "To Read",
@@ -268,7 +268,7 @@
     "saving": "Saving...",
     "remove": "Remove from library",
     "removeTitle": "Permanently remove this book?",
-    "confirmRemove": "This will permanently remove \u201c{title}\u201d from your library, including your reading progress, dates, rating, review, and collection assignments. This cannot be undone.",
+    "confirmRemove": "This will permanently remove “{title}” from your library, including your reading progress, dates, rating, review, and collection assignments. This cannot be undone.",
     "bookRemoved": "Book removed from your library.",
     "editBookDetails": "Edit book details",
     "authors": "Authors",

@@ -8,6 +8,7 @@ import { Camera, Trash2, Eye, EyeOff, LogOut } from "lucide-react";
 import Button from "@/components/button/button";
 import TextInput from "@/components/text-input/text-input";
 import FeedbackMessage from "@/components/feedback-message/feedback-message";
+import RouteLoading from "@/components/route-loading/route-loading";
 import { useAvatar } from "@/components/avatar-provider/avatar-provider";
 import styles from "./profile-page.module.css";
 
@@ -221,7 +222,7 @@ export default function ProfilePage() {
   };
 
   if (loading) {
-    return <div className={styles.loading}>{t("loading")}</div>;
+    return <RouteLoading />;
   }
 
   if (!profile) {

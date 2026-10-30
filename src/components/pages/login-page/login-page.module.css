@@ -1,0 +1,22 @@
+.forgotPassword {
+  margin-top: var(--size-4);
+  text-align: center;
+}
+
+.forgotPassword a {
+  display: inline-block;
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: text-decoration 0.2s;
+}
+
+.forgotPassword a:hover {
+  text-decoration: underline;
+}
+
+.forgotPassword a:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}

@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import AuthPageShell from "@/components/auth-page-shell/auth-page-shell";
 import { loginAction } from "@/actions/auth";
 import AuthForm from "@/components/auth-form/auth-form";
+import styles from "./login-page.module.css";
 
 export default async function LoginPage() {
   const t = await getTranslations("pages.login");
@@ -37,6 +38,9 @@ export default async function LoginPage() {
           },
         ]}
       />
+      <div className={styles.forgotPassword}>
+        <Link href="/forgot-password">{t("forgotPassword")}</Link>
+      </div>
     </AuthPageShell>
   );
 }

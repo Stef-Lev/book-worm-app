@@ -120,7 +120,8 @@
     },
     "login": {
       "title": "Σύνδεση",
-      "description": "Καλώς ήρθες ξανά στο PaperSmell."
+      "description": "Καλώς ήρθες ξανά στο PaperSmell.",
+      "forgotPassword": "Ξεχάσατε τον κωδικό σας;"
     },
     "register": {
       "title": "Δημιουργία λογαριασμού",
@@ -128,7 +129,6 @@
     },
     "profile": {
       "title": "Το προφίλ σου",
-      "loading": "Φόρτωση προφίλ...",
       "errorLoadingProfile": "Αποτυχία φόρτωσης προφίλ",
       "errorFetchingProfile": "Αποτυχία λήψης πληροφοριών προφίλ",
       "avatarSection": "Φωτογραφία προφίλ",

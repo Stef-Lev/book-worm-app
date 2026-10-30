@@ -28,9 +28,6 @@ export type FacetKey = Exclude<LibraryFilterKey, LibraryFilterKey.SortBy>;
 export const ALL_SHELVES = "all";
 export type ShelfFilter = Shelf[] | string | string[];
 
-export function toShelfFilter(value: unknown): ShelfFilter {
-  return isEnumValue(Shelf, value) ? value : ALL_SHELVES;
-}
 
 export function toLibrarySort(value: unknown): LibrarySort {
   return isEnumValue(LibrarySort, value) ? value : LibrarySort.Title;
