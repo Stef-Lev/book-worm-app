@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useCallback, useMemo } from "react";
 import styles from "./book-entry.module.css";
 import { Dialog } from "@ark-ui/react/dialog";
 import DialogOverlay from "@/components/dialog-overlay/dialog-overlay";
@@ -18,7 +19,7 @@ import { getNotificationRegion } from "@/lib/notifications";
 import { SHELVES, Shelf, isShelf } from "@/lib/shelves";
 import type { BookEntryProps } from "./book-entry.types";
 
-export default function BookEntry({
+export default React.memo(function BookEntry({
   entry,
   collections,
   shelfNames,
@@ -38,11 +39,11 @@ export default function BookEntry({
   const showFeedback =
     entry.status === Shelf.Read || entry.status === Shelf.DidNotFinish;
 
-  function update(changes: Partial<BookEntryProps["entry"]>) {
+  const update = useCallback((changes: Partial<BookEntryProps["entry"]>) => {
     onChange(entry.id, changes);
-  }
+  }, [onChange, entry.id]);
 
-  function changeStatus(status: Shelf) {
+  const changeStatus = useCallback((status: Shelf) => {
     const today = toDateOnly();
     update({
       status,
@@ -50,7 +51,76 @@ export default function BookEntry({
         !entry.startedAt && { startedAt: today }),
       ...(status === Shelf.Read && !entry.finishedAt && { finishedAt: today }),
     });
-  }
+  }, [update, entry.startedAt, entry.finishedAt]);
+
+  const shelfOptions = useMemo(
+    () => SHELVES.map((shelf) => ({
+      value: shelf,
+      label: shelfNames[shelf],
+    })),
+    [shelfNames],
+  );
+
+  const collectionOptions = useMemo(
+    () => toCollectionOptions(collections, labels.noCollection),
+    [collections, labels.noCollection],
+  );
+
+  const handleCollectionChange = useCallback(
+    (value: string) => {
+      update({ collectionIds: value ? [value] : [] });
+    },
+    [update],
+  );
+
+  const handleStatusChange = useCallback(
+    (value: string) => {
+      if (isShelf(value)) changeStatus(value);
+    },
+    [changeStatus],
+  );
+
+  const handleStartedAtChange = useCallback(
+    (value: string) => {
+      update({ startedAt: value });
+    },
+    [update],
+  );
+
+  const handleFinishedAtChange = useCallback(
+    (value: string) => {
+      update({ finishedAt: value });
+    },
+    [update],
+  );
+
+  const handleRatingChange = useCallback(
+    (rating: number | null) => {
+      update({ rating: rating ?? 0 });
+    },
+    [update],
+  );
+
+  const handleReviewChange = useCallback(
+    (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+      update({ review: event.target.value });
+    },
+    [update],
+  );
+
+  const handleSave = useCallback(
+    () => {
+      onSave(entry);
+    },
+    [onSave, entry],
+  );
+
+  const handleRemove = useCallback(
+    () => {
+      onRemove(entry);
+    },
+    [onRemove, entry],
+  );
 
   return (
     <article className={styles.entry}>
@@ -100,13 +170,8 @@ export default function BookEntry({
           fieldClassName={styles.field}
           value={entry.status}
           disabled={busy}
-          onValueChange={(value) => {
-            if (isShelf(value)) changeStatus(value);
-          }}
-          options={SHELVES.map((shelf) => ({
-            value: shelf,
-            label: shelfNames[shelf],
-          }))}
+          onValueChange={handleStatusChange}
+          options={shelfOptions}
         />
         <Dropdown
           label={labels.collection}
@@ -114,10 +179,8 @@ export default function BookEntry({
           className={styles.collectionSelect}
           value={selectedCollection?.id ?? ""}
           disabled={busy}
-          onValueChange={(value) =>
-            update({ collectionIds: value ? [value] : [] })
-          }
-          options={toCollectionOptions(collections, labels.noCollection)}
+          onValueChange={handleCollectionChange}
+          options={collectionOptions}
         />
         {(showStarted || showFinished) && (
           <div className={styles.dates}>
@@ -126,7 +189,7 @@ export default function BookEntry({
                 label={labels.startedAt}
                 fieldClassName={styles.field}
                 value={entry.startedAt}
-                onValueChange={(value) => update({ startedAt: value })}
+                onValueChange={handleStartedAtChange}
               />
             )}
             {showFinished && (
@@ -134,7 +197,7 @@ export default function BookEntry({
                 label={labels.finishedAt}
                 fieldClassName={styles.field}
                 value={entry.finishedAt}
-                onValueChange={(value) => update({ finishedAt: value })}
+                onValueChange={handleFinishedAtChange}
               />
             )}
           </div>
@@ -145,7 +208,7 @@ export default function BookEntry({
               <StarRating
                 label={labels.rating}
                 value={entry.rating}
-                onValueChange={(rating) => update({ rating })}
+                onValueChange={handleRatingChange}
                 disabled={busy}
               />
             </div>
@@ -156,14 +219,14 @@ export default function BookEntry({
                 className={styles.textarea}
                 value={entry.review}
                 maxLength={5000}
-                onChange={(event) => update({ review: event.target.value })}
+                onChange={handleReviewChange}
               />
             </div>
           </>
         )}
       </div>
       <div className={styles.actions}>
-        <Button loading={busy} onClick={() => onSave(entry)}>
+        <Button loading={busy} onClick={handleSave}>
           <Save aria-hidden="true" />
           {labels.save}
         </Button>
@@ -197,7 +260,7 @@ export default function BookEntry({
                   <Button
                     variant="destructive"
                     disabled={busy}
-                    onClick={() => onRemove(entry)}
+                    onClick={handleRemove}
                   >
                     <Trash2 aria-hidden="true" />
                     {labels.remove}
@@ -210,4 +273,4 @@ export default function BookEntry({
       </div>
     </article>
   );
-}
+});

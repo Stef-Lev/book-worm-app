@@ -3,6 +3,7 @@
 import { ChevronDown, RotateCcw, SlidersHorizontal } from "lucide-react";
 import { useTranslations } from "next-intl";
 import FilterOptions from "@/components/book-library/filter-options/filter-options";
+import { filterValuesEqual } from "@/components/book-library/filter-utils";
 import type { LibraryFiltersSidebarProps } from "./library-filters-sidebar.types";
 import styles from "./library-filters-sidebar.module.css";
 
@@ -14,9 +15,12 @@ export default function LibraryFiltersSidebar({
   onClear,
 }: LibraryFiltersSidebarProps) {
   const t = useTranslations("libraryWorkspace");
-  const hasChanges = sections.some(
-    (section) => values[section.key] !== defaults[section.key],
-  );
+
+  const hasChanges = sections.some((section) => {
+    const val = values[section.key];
+    const def = defaults[section.key];
+    return !filterValuesEqual(val, def);
+  });
 
   return (
     <aside className={styles.sidebar} aria-labelledby="library-filters-heading">
@@ -36,12 +40,15 @@ export default function LibraryFiltersSidebar({
         const selected = section.options.find(
           (option) => String(option.value) === values[section.key],
         );
-        const isActive = values[section.key] !== defaults[section.key];
+        const isActive = !filterValuesEqual(
+          values[section.key],
+          defaults[section.key],
+        );
         return (
           <details
             key={section.key}
             className={styles.section}
-            open={index < 2 || isActive}
+            open={section.key === "sortBy" || section.key === "shelf"}
           >
             <summary className={styles.summary}>
               <span className={styles.summaryText}>

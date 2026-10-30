@@ -10,15 +10,9 @@ import Button from "@/components/button/button";
 import IconButton from "@/components/icon-button/icon-button";
 import FilterOptions from "@/components/book-library/filter-options/filter-options";
 import { LibraryFilterKey } from "@/lib/library";
+import { filterValuesEqual } from "@/components/book-library/filter-utils";
 import type { LibraryFiltersDrawerProps } from "./library-filters-drawer.types";
 import styles from "./library-filters-drawer.module.css";
-
-function filterValuesEqual(a: string | string[], b: string | string[]): boolean {
-  if (Array.isArray(a) && Array.isArray(b)) {
-    return a.length === b.length && a.every((val, idx) => val === b[idx]);
-  }
-  return a === b;
-}
 
 export default function LibraryFiltersDrawer({
   values,

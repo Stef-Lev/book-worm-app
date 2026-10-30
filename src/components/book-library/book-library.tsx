@@ -113,6 +113,14 @@ function filterMatchesValue(
   return filterValues.some((fv) => entryValues.includes(fv));
 }
 
+type FilterState = {
+  shelfFilter: ShelfFilter;
+  authorFilter: string | string[];
+  categoryFilter: string | string[];
+  collectionFilter: string;
+  sortBy: LibrarySort;
+};
+
 export default function BookLibrary({
   mode,
   initialQuery = "",
@@ -125,28 +133,20 @@ export default function BookLibrary({
   const [query, setQuery] = useState(initialQuery);
   const [libraryQuery, setLibraryQuery] = useState(initialFilters.q ?? "");
   const [results, setResults] = useState<NewBook[]>([]);
-  const [shelfFilter, setShelfFilter] = useState<ShelfFilter>(() => {
-    const status = initialFilters.status;
-    if (!status) return [];
-    if (typeof status === 'string' && status === ALL_SHELVES) return [];
-    return status ? [status as Shelf] : [];
-  });
-  const [collectionFilter, setCollectionFilter] = useState(
-    initialFilters.collection ?? "",
-  );
-  const [authorFilter, setAuthorFilter] = useState<string | string[]>(() => {
-    const author = initialFilters.author ?? "";
-    return parseMultiSelectFilter(author);
-  });
-  const [categoryFilter, setCategoryFilter] = useState<string | string[]>(() => {
-    const category = initialFilters.category ?? "";
-    return parseMultiSelectFilter(category);
-  });
+  const [filters, setFilters] = useState<FilterState>(() => ({
+    shelfFilter: (() => {
+      const status = initialFilters.status;
+      if (!status) return [];
+      if (typeof status === 'string' && status === ALL_SHELVES) return [];
+      return status ? [status as Shelf] : [];
+    })(),
+    authorFilter: parseMultiSelectFilter(initialFilters.author ?? ""),
+    categoryFilter: parseMultiSelectFilter(initialFilters.category ?? ""),
+    collectionFilter: initialFilters.collection ?? "",
+    sortBy: toLibrarySort(initialFilters.sort),
+  }));
   const [libraryLoaded, setLibraryLoaded] = useState(false);
   const [libraryLoadFailed, setLibraryLoadFailed] = useState(false);
-  const [sortBy, setSortBy] = useState(() =>
-    toLibrarySort(initialFilters.sort),
-  );
   const [searchShelf, setSearchShelf] = useState(Shelf.ToRead);
   const [searchCollection, setSearchCollection] = useState("");
   const [busyId, setBusyId] = useState("");
@@ -228,104 +228,115 @@ export default function BookLibrary({
 
   useEffect(() => {
     if (isSearch) return;
-    const params = new URLSearchParams();
-    const shelfValue = Array.isArray(shelfFilter)
-      ? serializeMultiSelectFilter(shelfFilter)
-      : shelfFilter;
-    const authorValue = Array.isArray(authorFilter)
-      ? serializeMultiSelectFilter(authorFilter)
-      : authorFilter;
-    const categoryValue = Array.isArray(categoryFilter)
-      ? serializeMultiSelectFilter(categoryFilter)
-      : categoryFilter;
-    const values: [string, string, string][] = [
-      ["q", libraryQuery.trim(), ""],
-      ["status", shelfValue, ""],
-      ["author", authorValue, ""],
-      ["category", categoryValue, ""],
-      ["collection", collectionFilter, ""],
-      ["sort", sortBy, LibrarySort.Title],
-    ];
-    for (const [key, value, fallback] of values) {
-      if (value !== fallback) params.set(key, value);
-    }
-    const search = params.toString();
-    const current = new URLSearchParams(window.location.search);
-    if (search === current.toString()) return;
-    const url = `${window.location.pathname}${search ? `?${search}` : ""}`;
-    // Filter/sort changes get their own history entry; typing in search does not.
-    params.delete("q");
-    current.delete("q");
-    if (params.toString() === current.toString()) {
-      window.history.replaceState(null, "", url);
-    } else {
-      window.history.pushState(null, "", url);
-    }
+    
+    // Set up debounced URL update (300ms delay)
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams();
+      const shelfValue = Array.isArray(filters.shelfFilter)
+        ? serializeMultiSelectFilter(filters.shelfFilter)
+        : filters.shelfFilter;
+      const authorValue = Array.isArray(filters.authorFilter)
+        ? serializeMultiSelectFilter(filters.authorFilter as string[])
+        : filters.authorFilter;
+      const categoryValue = Array.isArray(filters.categoryFilter)
+        ? serializeMultiSelectFilter(filters.categoryFilter as string[])
+        : filters.categoryFilter;
+      const values: [string, string, string][] = [
+        ["q", libraryQuery.trim(), ""],
+        ["status", shelfValue, ""],
+        ["author", authorValue, ""],
+        ["category", categoryValue, ""],
+        ["collection", filters.collectionFilter, ""],
+        ["sort", filters.sortBy, LibrarySort.Title],
+      ];
+      for (const [key, value, fallback] of values) {
+        if (value !== fallback) params.set(key, value);
+      }
+      const search = params.toString();
+      const current = new URLSearchParams(window.location.search);
+      if (search === current.toString()) return;
+      const url = `${window.location.pathname}${search ? `?${search}` : ""}`;
+      // Filter/sort changes get their own history entry; typing in search does not.
+      params.delete("q");
+      current.delete("q");
+      if (params.toString() === current.toString()) {
+        window.history.replaceState(null, "", url);
+      } else {
+        window.history.pushState(null, "", url);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
   }, [
-    authorFilter,
-    categoryFilter,
-    collectionFilter,
+    filters,
     isSearch,
     libraryQuery,
-    shelfFilter,
-    sortBy,
   ]);
 
   useEffect(() => {
     if (isSearch) return;
     function syncFromUrl() {
       const params = new URLSearchParams(window.location.search);
-      setLibraryQuery(params.get("q") ?? "");
-      setShelfFilter(parseMultiSelectFilter(params.get("status") ?? ""));
-      setAuthorFilter(parseMultiSelectFilter(params.get("author") ?? ""));
-      setCategoryFilter(parseMultiSelectFilter(params.get("category") ?? ""));
-      setCollectionFilter(params.get("collection") ?? "");
-      setSortBy(toLibrarySort(params.get("sort")));
+      setFilters({
+        shelfFilter: parseMultiSelectFilter(params.get("status") ?? ""),
+        authorFilter: parseMultiSelectFilter(params.get("author") ?? ""),
+        categoryFilter: parseMultiSelectFilter(params.get("category") ?? ""),
+        collectionFilter: params.get("collection") ?? "",
+        sortBy: toLibrarySort(params.get("sort")),
+      });
     }
     window.addEventListener("popstate", syncFromUrl);
     return () => window.removeEventListener("popstate", syncFromUrl);
   }, [isSearch]);
 
+  const searchTerm = useMemo(
+    () => libraryQuery.trim().toLocaleLowerCase(),
+    [libraryQuery],
+  );
+  
+  const isbnSearchTerm = useMemo(
+    () => normalizeIsbn(libraryQuery),
+    [libraryQuery],
+  );
+
   const matchesFilters = useCallback(
     (entry: BookEntryData, ignore?: FacetKey) => {
-      const search = libraryQuery.trim().toLocaleLowerCase();
-      const isbnSearch = normalizeIsbn(libraryQuery);
       const matchesQuery =
-        !search ||
+        !searchTerm ||
         [
           entry.book.title,
           ...entry.book.authors,
           ...entry.book.categories,
           entry.book.isbn ?? "",
-        ].some((value) => value.toLocaleLowerCase().includes(search)) ||
-        (!!isbnSearch &&
-          normalizeIsbn(entry.book.isbn ?? "").includes(isbnSearch));
+        ].some((value) => value.toLocaleLowerCase().includes(searchTerm)) ||
+        (!!isbnSearchTerm &&
+          normalizeIsbn(entry.book.isbn ?? "").includes(isbnSearchTerm));
       return (
         matchesQuery &&
         (ignore === LibraryFilterKey.Shelf ||
-          !shelfFilter ||
-          Array.isArray(shelfFilter) && shelfFilter.length === 0 ||
-          filterMatchesValue(shelfFilter, entry.status)) &&
+          !filters.shelfFilter ||
+          Array.isArray(filters.shelfFilter) && filters.shelfFilter.length === 0 ||
+          filterMatchesValue(filters.shelfFilter, entry.status)) &&
         (ignore === LibraryFilterKey.Collection ||
-          !collectionFilter ||
-          entry.collectionIds.includes(collectionFilter)) &&
+          !filters.collectionFilter ||
+          entry.collectionIds.includes(filters.collectionFilter)) &&
         (ignore === LibraryFilterKey.Author ||
-          !authorFilter ||
-          Array.isArray(authorFilter) && authorFilter.length === 0 ||
-          filterMatchesValue(authorFilter, entry.book.authors)) &&
+          !filters.authorFilter ||
+          Array.isArray(filters.authorFilter) && filters.authorFilter.length === 0 ||
+          filterMatchesValue(filters.authorFilter, entry.book.authors)) &&
         (ignore === LibraryFilterKey.Category ||
-          !categoryFilter ||
-          Array.isArray(categoryFilter) && categoryFilter.length === 0 ||
-          filterMatchesValue(categoryFilter, entry.book.categories))
+          !filters.categoryFilter ||
+          Array.isArray(filters.categoryFilter) && filters.categoryFilter.length === 0 ||
+          filterMatchesValue(filters.categoryFilter, entry.book.categories))
       );
     },
-    [authorFilter, categoryFilter, collectionFilter, libraryQuery, shelfFilter],
+    [filters, searchTerm, isbnSearchTerm],
   );
 
   const visibleEntries = useMemo(() => {
     const filtered = entries.filter((entry) => matchesFilters(entry));
     return filtered.sort((a, b) => {
-      switch (sortBy) {
+      switch (filters.sortBy) {
         case LibrarySort.Author:
           return (a.book.authors[0] ?? "").localeCompare(
             b.book.authors[0] ?? "",
@@ -340,7 +351,7 @@ export default function BookLibrary({
           return a.book.title.localeCompare(b.book.title);
       }
     });
-  }, [entries, matchesFilters, sortBy]);
+  }, [entries, matchesFilters, filters.sortBy]);
 
   // Each facet lists only values present in books matching the *other* filters.
   const facetEntries = (facet: FacetKey) =>
@@ -352,110 +363,185 @@ export default function BookLibrary({
     );
   };
 
-  const shelfEntries = facetEntries(LibraryFilterKey.Shelf);
-  const authors = uniqueSorted(
-    facetEntries(LibraryFilterKey.Author).flatMap(
-      (entry) => entry.book.authors,
-    ),
-    authorFilter,
+  const shelfEntries = useMemo(
+    () => facetEntries(LibraryFilterKey.Shelf),
+    [entries, matchesFilters],
   );
-  const categories = uniqueSorted(
-    facetEntries(LibraryFilterKey.Category).flatMap(
-      (entry) => entry.book.categories,
-    ),
-    categoryFilter,
+  const authorEntries = useMemo(
+    () => facetEntries(LibraryFilterKey.Author),
+    [entries, matchesFilters],
   );
-  const collectionIdsInUse = new Set(
-    facetEntries(LibraryFilterKey.Collection).flatMap(
-      (entry) => entry.collectionIds,
-    ),
+  const categoryEntries = useMemo(
+    () => facetEntries(LibraryFilterKey.Category),
+    [entries, matchesFilters],
   );
-  const statusOptions = SHELVES.map((shelf) => ({
-    value: shelf,
-    label: shelfNames[shelf],
-    count: shelfEntries.filter((entry) => entry.status === shelf).length,
-  }));
-  const authorOptions = authors.map((author) => ({
-    value: author,
-    label: author,
-    count: facetEntries(LibraryFilterKey.Author).filter((entry) =>
-      entry.book.authors.includes(author),
-    ).length,
-  }));
-  const categoryOptions = categories.map((category) => ({
-    value: category,
-    label: category,
-    count: facetEntries(LibraryFilterKey.Category).filter((entry) =>
-      entry.book.categories.includes(category),
-    ).length,
-  }));
-  const collectionOptions = collections
-    .filter(
-      (collection) =>
-        collectionIdsInUse.has(collection.id) ||
-        collection.id === collectionFilter,
-    )
-    .map((collection) => ({
-      value: collection.id,
-      label: collection.name,
-      count: facetEntries(LibraryFilterKey.Collection).filter((entry) =>
-        entry.collectionIds.includes(collection.id),
-      ).length,
-    }));
-  const sortOptions = [
-    { value: LibrarySort.Title, label: t("sortTitle") },
-    { value: LibrarySort.Author, label: t("sortAuthor") },
-    { value: LibrarySort.Rating, label: t("sortRating") },
-    { value: LibrarySort.PageCount, label: t("sortPageCount") },
-    { value: LibrarySort.DateAdded, label: t("sortDateAdded") },
-  ];
+  const collectionEntries = useMemo(
+    () => facetEntries(LibraryFilterKey.Collection),
+    [entries, matchesFilters],
+  );
 
-  const filterValues: LibraryFilterValues = {
-    [LibraryFilterKey.Shelf]: shelfFilter,
-    [LibraryFilterKey.Author]: authorFilter,
-    [LibraryFilterKey.Category]: categoryFilter,
-    [LibraryFilterKey.Collection]: collectionFilter,
-    [LibraryFilterKey.SortBy]: sortBy,
-  };
-  const filterSections: LibraryFilterSection[] = [
-    { key: LibraryFilterKey.SortBy, label: t("sortBy"), options: sortOptions },
-    {
-      key: LibraryFilterKey.Shelf,
-      label: t("status"),
-      options: statusOptions,
-      multiSelect: true,
-    },
-    {
-      key: LibraryFilterKey.Author,
-      label: t("author"),
-      options: authorOptions,
-      multiSelect: true,
-    },
-    {
-      key: LibraryFilterKey.Category,
-      label: t("categories"),
-      options: categoryOptions,
-      multiSelect: true,
-    },
-    {
-      key: LibraryFilterKey.Collection,
-      label: t("collection"),
-      options: collectionOptions,
-      multiSelect: true,
-    },
-  ];
+  const authors = useMemo(
+    () => uniqueSorted(
+      authorEntries.flatMap((entry) => entry.book.authors),
+      filters.authorFilter,
+    ),
+    [authorEntries, filters.authorFilter],
+  );
+  const categories = useMemo(
+    () => uniqueSorted(
+      categoryEntries.flatMap((entry) => entry.book.categories),
+      filters.categoryFilter,
+    ),
+    [categoryEntries, filters.categoryFilter],
+  );
+  const collectionIdsInUse = useMemo(
+    () => new Set(
+      collectionEntries.flatMap((entry) => entry.collectionIds),
+    ),
+    [collectionEntries],
+  );
+
+  // Optimized facet counts using frequency maps instead of repeated filtering
+  const facetCounts = useMemo(() => {
+    const shelves = new Map<Shelf, number>();
+    const authorCounts = new Map<string, number>();
+    const categoryCounts = new Map<string, number>();
+    const collectionCounts = new Map<string, number>();
+
+    shelfEntries.forEach((entry) => {
+      shelves.set(entry.status, (shelves.get(entry.status) ?? 0) + 1);
+    });
+
+    authorEntries.forEach((entry) => {
+      entry.book.authors.forEach((author) => {
+        authorCounts.set(author, (authorCounts.get(author) ?? 0) + 1);
+      });
+    });
+
+    categoryEntries.forEach((entry) => {
+      entry.book.categories.forEach((category) => {
+        categoryCounts.set(category, (categoryCounts.get(category) ?? 0) + 1);
+      });
+    });
+
+    collectionEntries.forEach((entry) => {
+      entry.collectionIds.forEach((collectionId) => {
+        collectionCounts.set(collectionId, (collectionCounts.get(collectionId) ?? 0) + 1);
+      });
+    });
+
+    return { shelves, authorCounts, categoryCounts, collectionCounts };
+  }, [shelfEntries, authorEntries, categoryEntries, collectionEntries]);
+
+  const statusOptions = useMemo(
+    () => SHELVES.map((shelf) => ({
+      value: shelf,
+      label: shelfNames[shelf],
+      count: facetCounts.shelves.get(shelf) ?? 0,
+    })),
+    [facetCounts, shelfNames],
+  );
+
+  const authorOptions = useMemo(
+    () => authors.map((author) => ({
+      value: author,
+      label: author,
+      count: facetCounts.authorCounts.get(author) ?? 0,
+    })),
+    [authors, facetCounts],
+  );
+
+  const categoryOptions = useMemo(
+    () => categories.map((category) => ({
+      value: category,
+      label: category,
+      count: facetCounts.categoryCounts.get(category) ?? 0,
+    })),
+    [categories, facetCounts],
+  );
+
+  const collectionOptions = useMemo(
+    () => collections
+      .filter(
+        (collection) =>
+          collectionIdsInUse.has(collection.id) ||
+          collection.id === filters.collectionFilter,
+      )
+      .map((collection) => ({
+        value: collection.id,
+        label: collection.name,
+        count: facetCounts.collectionCounts.get(collection.id) ?? 0,
+      })),
+    [collections, collectionIdsInUse, facetCounts, filters.collectionFilter],
+  );
+
+  const sortOptions = useMemo(
+    () => [
+      { value: LibrarySort.Title, label: t("sortTitle") },
+      { value: LibrarySort.Author, label: t("sortAuthor") },
+      { value: LibrarySort.Rating, label: t("sortRating") },
+      { value: LibrarySort.PageCount, label: t("sortPageCount") },
+      { value: LibrarySort.DateAdded, label: t("sortDateAdded") },
+    ],
+    [t],
+  );
+
+  const filterValues: LibraryFilterValues = useMemo(
+    () => ({
+      [LibraryFilterKey.Shelf]: filters.shelfFilter,
+      [LibraryFilterKey.Author]: filters.authorFilter,
+      [LibraryFilterKey.Category]: filters.categoryFilter,
+      [LibraryFilterKey.Collection]: filters.collectionFilter,
+      [LibraryFilterKey.SortBy]: filters.sortBy,
+    }),
+    [filters],
+  );
+
+  const filterSections: LibraryFilterSection[] = useMemo(
+    () => [
+      { key: LibraryFilterKey.SortBy, label: t("sortBy"), options: sortOptions },
+      {
+        key: LibraryFilterKey.Shelf,
+        label: t("status"),
+        options: statusOptions,
+        multiSelect: true,
+      },
+      {
+        key: LibraryFilterKey.Author,
+        label: t("author"),
+        options: authorOptions,
+        multiSelect: true,
+      },
+      {
+        key: LibraryFilterKey.Category,
+        label: t("categories"),
+        options: categoryOptions,
+        multiSelect: true,
+      },
+      {
+        key: LibraryFilterKey.Collection,
+        label: t("collection"),
+        options: collectionOptions,
+        multiSelect: true,
+      },
+    ],
+    [t, sortOptions, statusOptions, authorOptions, categoryOptions, collectionOptions],
+  );
 
   function applyFilters(values: LibraryFilterValues) {
     const shelfValue = values[LibraryFilterKey.Shelf];
     const authorValue = values[LibraryFilterKey.Author];
     const categoryValue = values[LibraryFilterKey.Category];
     const collectionValue = values[LibraryFilterKey.Collection];
+    const sortValue = values[LibraryFilterKey.SortBy];
 
-    setShelfFilter(Array.isArray(shelfValue) ? shelfValue : parseMultiSelectFilter(String(shelfValue)));
-    setAuthorFilter(Array.isArray(authorValue) ? authorValue : parseMultiSelectFilter(String(authorValue)));
-    setCategoryFilter(Array.isArray(categoryValue) ? categoryValue : parseMultiSelectFilter(String(categoryValue)));
-    setCollectionFilter(Array.isArray(collectionValue) ? serializeMultiSelectFilter(collectionValue) : String(collectionValue));
-    setSortBy(toLibrarySort(String(values[LibraryFilterKey.SortBy])));
+    setFilters({
+      shelfFilter: Array.isArray(shelfValue) ? shelfValue : parseMultiSelectFilter(String(shelfValue)),
+      authorFilter: Array.isArray(authorValue) ? authorValue : parseMultiSelectFilter(String(authorValue)),
+      categoryFilter: Array.isArray(categoryValue) ? categoryValue : parseMultiSelectFilter(String(categoryValue)),
+      collectionFilter: Array.isArray(collectionValue) ? serializeMultiSelectFilter(collectionValue) : String(collectionValue),
+      sortBy: toLibrarySort(String(sortValue)),
+    });
   }
 
   function getFilteredResultCount(filterValues: LibraryFilterValues): number {
@@ -471,18 +557,16 @@ export default function BookLibrary({
     const collectionFilterValue = String(filterValues[LibraryFilterKey.Collection]);
 
     return entries.filter((entry) => {
-      const search = libraryQuery.trim().toLocaleLowerCase();
-      const isbnSearch = normalizeIsbn(libraryQuery);
       const matchesQuery =
-        !search ||
+        !searchTerm ||
         [
           entry.book.title,
           ...entry.book.authors,
           ...entry.book.categories,
           entry.book.isbn ?? "",
-        ].some((value) => value.toLocaleLowerCase().includes(search)) ||
-        (!!isbnSearch &&
-          normalizeIsbn(entry.book.isbn ?? "").includes(isbnSearch));
+        ].some((value) => value.toLocaleLowerCase().includes(searchTerm)) ||
+        (!!isbnSearchTerm &&
+          normalizeIsbn(entry.book.isbn ?? "").includes(isbnSearchTerm));
 
       return (
         matchesQuery &&
@@ -657,6 +741,31 @@ export default function BookLibrary({
       );
     }
   }
+
+  const handleEntryChange = useCallback(
+    (id: string, changes: Partial<BookEntryData>) => {
+      setEntries((previous) =>
+        previous.map((item) =>
+          item.id === id ? { ...item, ...changes } : item,
+        ),
+      );
+    },
+    [],
+  );
+
+  const handleEntrySave = useCallback(
+    (entry: BookEntryData) => {
+      void saveEntry(entry);
+    },
+    [],
+  );
+
+  const handleEntryRemove = useCallback(
+    (entry: BookEntryData) => {
+      void removeEntry(entry);
+    },
+    [],
+  );
 
   const entryLabels = {
     author: t("author"),
@@ -879,7 +988,9 @@ export default function BookLibrary({
                       ),
                     })),
                   );
-                  if (collectionFilter === id) setCollectionFilter("");
+                  if (filters.collectionFilter === id) {
+                    setFilters({ ...filters, collectionFilter: "" });
+                  }
                   if (searchCollection === id) setSearchCollection("");
                 }}
               />
@@ -933,15 +1044,9 @@ export default function BookLibrary({
                         collections={collections}
                         shelfNames={shelfNames}
                         labels={entryLabels}
-                        onChange={(id, changes) =>
-                          setEntries((previous) =>
-                            previous.map((item) =>
-                              item.id === id ? { ...item, ...changes } : item,
-                            ),
-                          )
-                        }
-                        onSave={(changed) => void saveEntry(changed)}
-                        onRemove={(removed) => void removeEntry(removed)}
+                        onChange={handleEntryChange}
+                        onSave={handleEntrySave}
+                        onRemove={handleEntryRemove}
                         busy={busyId === entry.id}
                       />
                     ))}

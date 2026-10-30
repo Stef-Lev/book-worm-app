@@ -3,6 +3,7 @@
 import { Trash2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { LibraryFilterKey } from "@/lib/library";
+import { filterValuesEqual } from "@/components/book-library/filter-utils";
 import type { SelectedFiltersPillsProps } from "./selected-filters-pills.types";
 import styles from "./selected-filters-pills.module.css";
 
@@ -24,7 +25,7 @@ export default function SelectedFiltersPills({
   const activeFilters = sections.filter(
     (section) =>
       section.key !== LibraryFilterKey.SortBy &&
-      values[section.key] !== defaults[section.key],
+      !filterValuesEqual(values[section.key], defaults[section.key]),
   );
 
   const sortLabel = sections
@@ -107,15 +108,17 @@ export default function SelectedFiltersPills({
             </div>
           );
         })}
-        <button
-          type="button"
-          className={styles.pill}
-          onClick={onClearAll}
-          aria-label={t("clearFilters")}
-        >
-          <Trash2 aria-hidden="true" width="14" />
-          <span>{t("clearFilters")}</span>
-        </button>
+        {hasAnyFilter && (
+          <button
+            type="button"
+            className={styles.pill}
+            onClick={onClearAll}
+            aria-label={t("clearFilters")}
+          >
+            <Trash2 aria-hidden="true" width="14" />
+            <span>{t("clearFilters")}</span>
+          </button>
+        )}
       </div>
     </div>
   );
