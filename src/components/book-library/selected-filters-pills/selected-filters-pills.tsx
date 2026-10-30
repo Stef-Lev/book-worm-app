@@ -77,10 +77,13 @@ export default function SelectedFiltersPills({
                   <button
                     type="button"
                     className={styles.remove}
-                    onClick={() =>
-                      onRemoveFilterValue?.(section.key, val) ||
-                      onRemoveFilter(section.key)
-                    }
+                    onClick={() => {
+                      if (onRemoveFilterValue) {
+                        onRemoveFilterValue(section.key, val);
+                      } else {
+                        onRemoveFilter(section.key);
+                      }
+                    }}
                     aria-label={`${t("remove")}: ${label}`}
                   >
                     <X aria-hidden="true" />
