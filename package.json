@@ -47,7 +47,7 @@
   },
   "allowScripts": {
     "@parcel/watcher@2.6.0": true,
-    "@swc/core@1.16.20": true,
+    "@swc/core@1.16.21": true,
     "unrs-resolver@1.12.2": true
   }
 }
